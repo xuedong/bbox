@@ -3,12 +3,29 @@
 import numpy as np
 import math
 import random
-import pyplot as pl
+import pylab as pl
 
 """
 Target function
 """
+class DoubleSine:
+    def __init__(self, rho1, rho2, tmax):
+        self.ep1 = -math.log(rho1, 2)
+        self.ep2 = -math.log(rho2, 2)
+        self.tmax = tmax
+        self.fmax = 0.
 
+    def f(self, x):
+        u = 2*math.fabs(x-self.tmax)
+        if u == 0:
+            return u
+        else:
+            ew = math.pow(u, self.ep2) - math.pow(u, self.ep1)
+            mysin = (math.sin(math.pi*math.log(u, 2))+1)/2.
+            return mysin*ew - math.pow(u, self.ep2)
+
+    def fmax(self):
+        return self.fmax
 
 """
 Function domain partitioning
