@@ -10,6 +10,8 @@ class HTree:
         self.uvalue = float('inf')
         self.tvalue = 0
         self.reward = 0.
+        self.noisy = None
+        self.evaluated = None
         self.support = support
         self.father = father
         self.depth = depth
@@ -23,12 +25,21 @@ class HTree:
 
         self.children = [Tree(s, self, self.depth + 1, self.rho, self.box) for s in supports]
 
+    def explore(self):
+        if self.tvalue == 0:
+            return self
+        elif not(self.children):
+            self.add_children()
+            return random.choice(self.children)
+        else:
+            return max(self.children, key=lambda x: x.bvalue).explore()
+
     def update_node(self, alpha):
         mean = self.reward/self.tvalue
         hoeffding = math.sqrt(2.*alpha/float(self.tvalue))
         variation = self.nu * math.pow(self.rho, self.depth)
 
-        self.uvalue = mean + hoeffdiig + variation
+        self.uvalue = mean + hoeffding + variation
 
     def update_path(self, reward, alpha):
         self.reward += reward
@@ -44,4 +55,12 @@ class HTree:
             self.father.update_path(reward, alpha)
 
     def sample(self, alpha):
-        return
+        leaf = self.explore()
+
+        if leaf.noisy is None:
+            x = self.box.rand(leaf.support)
+            leaf.evaluated = x
+            leaf.noisy = self.box.f_noised(x)
+        leaf.update_path(leaf.noisy, alpha)
+
+        return leaf.evaluated
