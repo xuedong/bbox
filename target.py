@@ -5,26 +5,28 @@ import math
 import random
 
 class Box:
-    def __init__(self, f, fmax, support):
+    def __init__(self, f, fmax):
         self.f_noised = None
         self.f_mean = f
         self.fmax = fmax
         self.split = None
         self.center = None
         self.rand = None
-        self.support = support
 
-    def std_center(self):
-        a, b = self.support
+    def std_center(self, support):
+        a, b = support
+
         return (a+b)/2.
 
-    def std_rand(self):
-        a, b = self.support
+    def std_rand(self, support):
+        a, b = support
+
         return a + (b-a)*random.random()
 
-    def std_split(self):
-        a, b = self.support
-        m = self.std_center()
+    def std_split(self, support):
+        a, b = support
+        m = (a+b)/2.
+
         return [(a, m), (m, b)]
 
     #def std_noise(self, x, var):
