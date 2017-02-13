@@ -23,7 +23,7 @@ class HTree:
     def add_children(self):
         supports = self.box.split(self.support)
 
-        self.children = [Tree(s, self, self.depth + 1, self.rho, self.box) for s in supports]
+        self.children = [HTree(s, self, self.depth + 1, self.rho, self.nu, self.box) for s in supports]
 
     def explore(self):
         if self.tvalue == 0:
@@ -35,11 +35,14 @@ class HTree:
             return max(self.children, key=lambda x: x.bvalue).explore()
 
     def update_node(self, alpha):
-        mean = self.reward/self.tvalue
-        hoeffding = math.sqrt(2.*alpha/float(self.tvalue))
-        variation = self.nu * math.pow(self.rho, self.depth)
+        if self.tvalue == 0:
+            self.uvalue = float('inf')
+        else:
+            mean = float(self.reward)/float(self.tvalue)
+            hoeffding = math.sqrt(2.*alpha/float(self.tvalue))
+            variation = self.nu * math.pow(self.rho, self.depth)
 
-        self.uvalue = mean + hoeffding + variation
+            self.uvalue = mean + hoeffding + variation
 
     def update_path(self, reward, alpha):
         self.reward += reward
@@ -53,6 +56,15 @@ class HTree:
 
         if self.father is not(None):
             self.father.update_path(reward, alpha)
+
+    #def update(self, alpha):
+    #    self.update_node(alpha)
+    #    if not(self.children):
+    #        self.bvalue = self.uvalue
+    #    else:
+    #        for child in self.children:
+    #            child.update(alpha)
+    #        self.bvalue = min(self.uvalue, max([child.bvalue for child in self.children]))
 
     def sample(self, alpha):
         leaf = self.explore()

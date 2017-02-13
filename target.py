@@ -17,12 +17,36 @@ class DoubleSine:
 
     def f(self, x):
         u = 2*math.fabs(x-self.tmax)
+
         if u == 0:
             return u
         else:
             ew = math.pow(u, self.ep2) - math.pow(u, self.ep1)
             mysin = (math.sin(math.pi*math.log(u, 2))+1)/2.
             return mysin*ew - math.pow(u, self.ep2)
+
+    def fmax(self):
+        return self.fmax
+
+class DiffFunc:
+    def __init__(self, tmax):
+        self.tmax = tmax
+        self.fmax = 0.
+
+    def f(self, x):
+        u = math.fabs(x-self.tmax)
+        if u == 0:
+            v = 0
+        else:
+            v = math.log(u, 2)
+        frac = v - math.floor(v)
+
+        if u == 0:
+            return u
+        elif frac <= 0.5:
+            return -math.pow(u, 2)
+        else:
+            return -math.sqrt(u)
 
     def fmax(self):
         return self.fmax
@@ -38,6 +62,7 @@ class Box:
         self.split = None
         self.center = None
         self.rand = None
+        self.support = (0., 1.)
 
     def std_center(self, support):
         a, b = support
@@ -56,7 +81,7 @@ class Box:
         return [(a, m), (m, b)]
 
     def std_noise(self, var):
-        self.f_noised = lambda x: f_mean(x) + var*random.random()
+        self.f_noised = lambda x: self.f_mean(x) + var*random.random()
 
     def std_partition(self):
         self.center = self.std_center
@@ -64,7 +89,7 @@ class Box:
         self.split = self.std_split
 
     def plot(self):
-        x = np.array([i/10000. for i in range(10000)])
-        y = np.array([self.f_mean(i/10000.) for i in range(10000)])
+        x = np.array([(i+1)/10000. for i in range(9999)])
+        y = np.array([self.f_mean((i+1)/10000.) for i in range(9999)])
         pl.plot(x, y)
         pl.show()
