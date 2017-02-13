@@ -39,7 +39,7 @@ def regret_hoo(bbox, rho, nu):
     cum = 0.
 
     for i in range(HORIZON):
-        alpha = math.log(i+1)
+        alpha = math.log(i+1) * (VAR ** 2)
         htree.update_node(alpha)
         x = htree.sample(alpha)
         cum += bbox.fmax - bbox.f_mean(x)
@@ -61,8 +61,18 @@ start_time = time.time()
 f2 = target.DiffFunc(0.5)
 bbox2 = std_box(f2.f, f2.fmax)
 #bbox2.plot()
+
+# Simple regret evolutiion with respect to different rhos
 regrets = np.array([regret_hoo(bbox2, rho_[i], nu_)[HORIZON-1] for i in range(100)])
+print("--- %s seconds ---" % (time.time() - start_time))
 pl.plot(rho_, regrets)
 pl.show()
 
-print("--- %s seconds ---" % (time.time()-start_time))
+# Simple regret evolution with respect to number of evaluations
+#regrets = np.array(regret_hoo(bbox2, 0.66, nu_)[0:500])
+#print("--- %s seconds ---" % (time.time() - start_time))
+#X = range(500)
+#pl.plot(X, regrets)
+#pl.show()
+
+
