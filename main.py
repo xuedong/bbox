@@ -12,11 +12,13 @@ import target
 import hoo
 
 # Macros
-HORIZON = 5000
-RHOMAX = 20
-VAR = 0.1
+HORIZON = 2000
+RHOMAX = 100
+SIGMA = 0.1
+EPOCH = 64
 
-# Parameters
+# Global Parameters
+alpha_ = math.log(HORIZON) * (SIGMA ** 2)
 rho_ = np.arange(0, 1, 0.01)
 nu_ = 1.
 
@@ -26,7 +28,7 @@ nu_ = 1.
 
 def std_box(f, fmax):
     box = target.Box(f, fmax)
-    box.std_noise(VAR)
+    box.std_noise(SIGMA)
     box.std_partition()
 
     return box
@@ -39,9 +41,8 @@ def regret_hoo(bbox, rho, nu):
     cum = 0.
 
     for i in range(HORIZON):
-        alpha = math.log(i+1) * (VAR ** 2)
-        htree.update_node(alpha)
-        x = htree.sample(alpha)
+        htree.update_node(alpha_)
+        x = htree.sample(alpha_)
         cum += bbox.fmax - bbox.f_mean(x)
         y[i] = cum/(i+1)
 
@@ -63,16 +64,20 @@ bbox2 = std_box(f2.f, f2.fmax)
 #bbox2.plot()
 
 # Simple regret evolutiion with respect to different rhos
-regrets = np.array([regret_hoo(bbox2, rho_[i], nu_)[HORIZON-1] for i in range(100)])
+regrets = np.zeros(RHOMAX)
+for k in range(EPOCH):
+    regrets_current = np.array([regret_hoo(bbox2, rho_[i], nu_)[HORIZON-1] for i in range(RHOMAX)])
+    regrets = np.add(regrets, regrets_current)
 print("--- %s seconds ---" % (time.time() - start_time))
-pl.plot(rho_, regrets)
+pl.plot(rho_, regrets/float(EPOCH))
 pl.show()
 
 # Simple regret evolution with respect to number of evaluations
-#regrets = np.array(regret_hoo(bbox2, 0.66, nu_)[0:500])
+#regrets = np.zeros(HORIZON)
+#for k in range(EPOCH):
+#    regrets_current = np.array(regret_hoo(bbox2, 0.66, nu_))
+#    regrets = np.add(regrets, regrets_current)
 #print("--- %s seconds ---" % (time.time() - start_time))
-#X = range(500)
-#pl.plot(X, regrets)
+#X = range(HORIZON)
+#pl.plot(X, regrets/float(EPOCH))
 #pl.show()
-
-
