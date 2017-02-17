@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# This code is based on the original code of Jean-Bastien Grill
+# https://team.inria.fr/sequel/Software/POO/
+
 import random
 import numpy as np
 import math
@@ -57,14 +60,14 @@ class HTree:
         if self.father is not(None):
             self.father.update_path(reward, alpha)
 
-    #def update(self, alpha):
-    #    self.update_node(alpha)
-    #    if not(self.children):
-    #        self.bvalue = self.uvalue
-    #    else:
-    #        for child in self.children:
-    #            child.update(alpha)
-    #        self.bvalue = min(self.uvalue, max([child.bvalue for child in self.children]))
+    def update(self, alpha):
+        self.update_node(alpha)
+        if not(self.children):
+            self.bvalue = self.uvalue
+        else:
+            for child in self.children:
+                child.update(alpha)
+                self.bvalue = min(self.uvalue, max([child.bvalue for child in self.children]))
 
     def sample(self, alpha):
         leaf = self.explore()

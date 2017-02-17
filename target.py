@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# This code is based on the original code of Jean-Bastien Grill
+# https://team.inria.fr/sequel/Software/POO/
+
 import numpy as np
 import math
 import random
