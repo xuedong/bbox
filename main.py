@@ -10,6 +10,8 @@ import sys
 import math
 import random
 import time
+import pathos.multiprocessing as mp
+import functools as ft
 
 import target
 import hoo
@@ -19,11 +21,13 @@ HORIZON = 2000
 RHOMAX = 20
 SIGMA = 0.1
 EPOCH = 20
-VERBOSE = False
+VERBOSE = True
+PARALLEL = False
+JOBS = 8
 
 # Global Parameters
 alpha_ = math.log(HORIZON) * (SIGMA ** 2)
-rho_ = np.arange(0, 1, 0.01)
+rhos_ = [float(j)/float(RHOMAX) for j in range(RHOMAX)]
 nu_ = 1.
 
 #########
@@ -110,8 +114,8 @@ f1 = target.DoubleSine(0.3, 0.8, 0.5)
 bbox1 = std_box(f1.f, f1.fmax)
 #bbox1.plot()
 
-#f2 = target.DiffFunc(0.5)
-#bbox2 = std_box(f2.f, f2.fmax)
+f2 = target.DiffFunc(0.5)
+bbox2 = std_box(f2.f, f2.fmax)
 #bbox2.plot()
 
 # Simple regret evolutiion with respect to different rhos
@@ -133,14 +137,30 @@ bbox1 = std_box(f1.f, f1.fmax)
 #pl.plot(X, regrets/float(EPOCH))
 #pl.show()
 
+pool = mp.ProcessingPool(JOBS)
+def partial_regret_hoo(rhos):
+    return regret_hoo(bbox1, rhos, nu_)
+#partial_regret_hoo = ft.partial(regret_hoo, bbox=bbox1, nu=nu_)
+
 data = [None for k in range(EPOCH)]
 current = [[0. for i in range(HORIZON)] for j in range(RHOMAX)]
-for k in range(EPOCH):
-    for j in range(RHOMAX):
-        regrets = regret_hoo(bbox1, float(j)/float(RHOMAX), alpha_)
-        for i in range(HORIZON):
-            current[j][i] += regrets[i]
-    data[k] = current
-    current = [[0. for i in range(HORIZON)] for j in range(RHOMAX)]
+
+if PARALLEL:
+    for k in range(EPOCH):
+        data[k] = np.array(pool.map(partial_regret_hoo, rhos_))
+        if VERBOSE:
+            print(str(k+1)+"/"+str(EPOCH))
+        #print(regrets.shape)
+else:
+    for k in range(EPOCH):
+        for j in range(RHOMAX):
+            regrets = regret_hoo(bbox1, float(j)/float(RHOMAX), nu_)
+            for i in range(HORIZON):
+                current[j][i] += regrets[i]
+            if VERBOSE:
+                print(str(1+j+k*RHOMAX)+"/"+str(EPOCH*RHOMAX))
+        data[k] = current
+        current = [[0. for i in range(HORIZON)] for j in range(RHOMAX)]
+print("--- %s seconds ---" % (time.time() - start_time))
 
 show(data, EPOCH, HORIZON, RHOMAX, f1)
