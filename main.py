@@ -20,9 +20,10 @@ import hoo
 HORIZON = 2000
 RHOMAX = 20
 SIGMA = 0.1
-EPOCH = 20
+EPOCH = 10
+UPDATE = False
 VERBOSE = True
-PARALLEL = False
+PARALLEL = True
 JOBS = 8
 
 # Global Parameters
@@ -42,15 +43,17 @@ def std_box(f, fmax):
     return box
 
 # Regret for HOO
-def regret_hoo(bbox, rho, nu):
+def regret_hoo(bbox, rho, nu, alpha):
     y = np.zeros(HORIZON)
     #y = [0. for i in range(HORIZON)]
     htree = hoo.HTree(bbox.support, None, 0, rho, nu, bbox)
     cum = 0.
 
     for i in range(HORIZON):
-        htree.update(alpha_)
-        x = htree.sample(alpha_)
+        if UPDATE and alpha < math.log(i+1) * (SIGMA ** 2):
+            alpha += 1
+            htree.update(alpha)
+        x = htree.sample(alpha)
         cum += bbox.fmax - bbox.f_mean(x)
         y[i] = cum/(i+1)
 
@@ -58,7 +61,8 @@ def regret_hoo(bbox, rho, nu):
 
 # Plot regret curve
 def show(data, epoch, horizon, rhomax, func):
-    rhos = [int(rhomax*k/4.) for k in range(4)]
+    #rhos = [int(rhomax*k/4.) for k in range(4)]
+    rhos = [0, 6, 12, 18]
     style = [[5,5], [1,3], [5,3,1,3], [5,2,5,2,5,10]]
 
     means = [[sum([data[k][j][i] for k in range(epoch)])/float(epoch) for i in range(horizon)] for j in range(rhomax)]
@@ -139,8 +143,8 @@ bbox2 = std_box(f2.f, f2.fmax)
 
 pool = mp.ProcessingPool(JOBS)
 def partial_regret_hoo(rhos):
-    return regret_hoo(bbox1, rhos, nu_)
-#partial_regret_hoo = ft.partial(regret_hoo, bbox=bbox1, nu=nu_)
+    return regret_hoo(bbox2, rhos, nu_, alpha_)
+#partial_regret_hoo = ft.partial(regret_hoo, bbox=bbox1, nu=nu_, alpha=alpha_)
 
 data = [None for k in range(EPOCH)]
 current = [[0. for i in range(HORIZON)] for j in range(RHOMAX)]
@@ -154,7 +158,7 @@ if PARALLEL:
 else:
     for k in range(EPOCH):
         for j in range(RHOMAX):
-            regrets = regret_hoo(bbox1, float(j)/float(RHOMAX), nu_)
+            regrets = regret_hoo(bbox2, float(j)/float(RHOMAX), nu_, alpha_)
             for i in range(HORIZON):
                 current[j][i] += regrets[i]
             if VERBOSE:
@@ -163,4 +167,4 @@ else:
         current = [[0. for i in range(HORIZON)] for j in range(RHOMAX)]
 print("--- %s seconds ---" % (time.time() - start_time))
 
-show(data, EPOCH, HORIZON, RHOMAX, f1)
+show(data, EPOCH, HORIZON, RHOMAX, f2)
