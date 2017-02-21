@@ -36,8 +36,8 @@ nu_ = 1.
 # Utils #
 #########
 
-def std_box(f, fmax):
-    box = target.Box(f, fmax)
+def std_box(f, fmax, nsplits, dim):
+    box = target.Box(f, fmax, nsplits, dim)
     box.std_noise(SIGMA)
     box.std_partition()
 
@@ -122,12 +122,10 @@ start_time = time.time()
 
 # First test
 f1 = target.DoubleSine(0.3, 0.8, 0.5)
-bbox1 = std_box(f1.f, f1.fmax)
-#bbox1.plot()
+bbox1 = std_box(f1.f, f1.fmax, 2, 1)
 
 f2 = target.DiffFunc(0.5)
-bbox2 = std_box(f2.f, f2.fmax)
-#bbox2.plot()
+bbox2 = std_box(f2.f, f2.fmax, 2, 1)
 
 # Simple regret evolutiion with respect to different rhos
 #regrets = np.zeros(RHOMAX)
@@ -148,6 +146,11 @@ bbox2 = std_box(f2.f, f2.fmax)
 #pl.plot(X, regrets/float(EPOCH))
 #pl.show()
 
+# 2D function test
+f3 = target.Himmelblau()
+bbox3 = std_box(f3.f, f3.fmax, 2, 2)
+bbox3.plot2D()
+
 pool = mp.ProcessingPool(JOBS)
 def partial_regret_hoo(rhos):
     return regret_hoo(bbox1, rhos, nu_, alpha_)
@@ -156,6 +159,7 @@ def partial_regret_hoo(rhos):
 data = [None for k in range(EPOCH)]
 current = [[0. for i in range(HORIZON)] for j in range(RHOMAX)]
 
+"""
 if PARALLEL:
     for k in range(EPOCH):
         data[k] = np.array(pool.map(partial_regret_hoo, rhos_))
@@ -174,5 +178,6 @@ else:
         current = [[0. for i in range(HORIZON)] for j in range(RHOMAX)]
 print("--- %s seconds ---" % (time.time() - start_time))
 
-bbox1.plot()
+#bbox1.plot1D()
 show(data, EPOCH, HORIZON, RHOMAX, DELTA, f1)
+"""

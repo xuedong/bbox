@@ -6,7 +6,10 @@
 import numpy as np
 import math
 import random
+#import operator as op
 import pylab as pl
+import matplotlib as mpl
+from mpl_toolkits.mplot3d import Axes3D
 
 """
 Target function
@@ -19,7 +22,7 @@ class DoubleSine:
         self.fmax = 0.
 
     def f(self, x):
-        u = 2*math.fabs(x-self.tmax)
+        u = 2*math.fabs(x[0]-self.tmax)
 
         if u == 0:
             return u
@@ -37,7 +40,7 @@ class DiffFunc:
         self.fmax = 0.
 
     def f(self, x):
-        u = math.fabs(x-self.tmax)
+        u = math.fabs(x[0]-self.tmax)
         if u == 0:
             v = 0
         else:
@@ -54,34 +57,53 @@ class DiffFunc:
     def fmax(self):
         return self.fmax
 
+class Himmelblau:
+    def __init__(self):
+        self.fmax = 0.
+
+    def f(self, x):
+        return -(x[0]**2+x[1]-11.)**2-(x[0]+x[1]**2-7)**2
+
+    def fmax(self):
+        return self.fmax
+
 """
 Function domain partitioning
 """
 class Box:
-    def __init__(self, f, fmax):
+    def __init__(self, f, fmax, nsplits, dim):
         self.f_noised = None
         self.f_mean = f
         self.fmax = fmax
         self.split = None
         self.center = None
         self.rand = None
-        self.support = (0., 1.)
+        self.nsplits = nsplits
+        self.dim = dim
+        self.support = []
+        for i in range(dim):
+            self.support.append((0., 1.))
 
     def std_center(self, support):
-        a, b = support
-
-        return (a+b)/2.
+        return [(support[i][0]+support[i][1])/2. for i in range(len(support))]
 
     def std_rand(self, support):
-        a, b = support
-
-        return a + (b-a)*random.random()
+        return [(support[i][0]+(support[i][1]-support[i][0])*random.random()) for i in range(len(support))]
 
     def std_split(self, support):
-        a, b = support
-        m = (a+b)/2.
+        lens = np.array([support[i][1]-support[i][0] for i in range(len(support))])
+        max_index = np.argmin(lens)
+        max_length = np.max(lens)
+        a, b = support[max_index]
+        step = max_length/self.nsplits
+        split = [(a+step*i, a+step*(i+1)) for i in range(self.nsplits)]
 
-        return [(a, m), (m, b)]
+        supports = [None for i in range(self.nsplits)]
+        for i in range(self.nsplits):
+            supports[i] = [support[j] for j in range(len(support))]
+            supports[i][max_index] = split[i]
+
+        return supports
 
     def std_noise(self, sigma):
         self.f_noised = lambda x: self.f_mean(x) + np.random.normal(0, sigma)
@@ -92,8 +114,35 @@ class Box:
         self.rand = self.std_rand
         self.split = self.std_split
 
-    def plot(self):
+    def plot1D(self):
+        """
+        Plot for 1D function.
+        """
         x = np.array([(i+1)/10000. for i in range(9999)])
-        y = np.array([self.f_mean((i+1)/10000.) for i in range(9999)])
+        y = np.array([self.f_mean([(i+1)/10000.]) for i in range(9999)])
         pl.plot(x, y)
         pl.show()
+
+    def plot2D(self):
+        """
+        Plot for 2D function
+        """
+        # 2D spaced down level curve plot
+        x = np.array([(i-600)/100. for i in range(1199)])
+        y = np.array([(j-600)/100. for j in range(1199)])
+        X, Y = pl.meshgrid(x, y)
+        Z = np.array([[self.f_mean([(i-600)/100., (j-600)/100.]) for i in range(1199)] for j in range(1199)])
+
+        im = pl.imshow(Z, cmap=pl.cm.RdBu)
+        cset = pl.contour(Z, np.arange(-1, 1.5, 0.2), linewidths=2, cmap=pl.cm.Set2)
+        pl.colorbar(im)
+        pl.show()
+
+        # 3D plot
+        fig = mpl.pyplot.figure()
+        ax = fig.gca(projection='3d')
+        surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=pl.cm.RdBu, linewidth=0, antialiased=False)
+        ax.zaxis.set_major_locator(mpl.ticker.LinearLocator(10))
+        ax.zaxis.set_major_formatter(mpl.ticker.FormatStrFormatter('%.02f'))
+        fig.colorbar(surf, shrink=0.5, aspect=5)
+        mpl.pyplot.show()
