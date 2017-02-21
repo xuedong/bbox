@@ -85,6 +85,7 @@ class Box:
 
     def std_noise(self, sigma):
         self.f_noised = lambda x: self.f_mean(x) + np.random.normal(0, sigma)
+        #self.f_noised = lambda x: self.f_mean(x) + random.random()
 
     def std_partition(self):
         self.center = self.std_center

@@ -17,10 +17,11 @@ import target
 import hoo
 
 # Macros
-HORIZON = 2000
+HORIZON = 5000
 RHOMAX = 20
 SIGMA = 0.1
-EPOCH = 10
+DELTA = 0.05
+EPOCH = 20
 UPDATE = False
 VERBOSE = True
 PARALLEL = True
@@ -60,13 +61,19 @@ def regret_hoo(bbox, rho, nu, alpha):
     return y
 
 # Plot regret curve
-def show(data, epoch, horizon, rhomax, func):
-    #rhos = [int(rhomax*k/4.) for k in range(4)]
-    rhos = [0, 6, 12, 18]
+def show(data, epoch, horizon, rhomax, delta, func):
+    rhos = [int(rhomax*k/4.) for k in range(4)]
+    #rhos = [0, 6, 12, 18]
     style = [[5,5], [1,3], [5,3,1,3], [5,2,5,2,5,10]]
 
     means = [[sum([data[k][j][i] for k in range(epoch)])/float(epoch) for i in range(horizon)] for j in range(rhomax)]
-    devs = [[math.sqrt(sum([(data[k][j][i]-means[j][i])**2 for k in range(epoch)])/float(epoch-1)) for i in range(horizon)] for j in range(rhomax)]
+    devs = [[math.sqrt(sum([(data[k][j][i]-means[j][i])**2 for k in range(epoch)])/(float(epoch)*float(epoch-1))) for i in range(horizon)] for j in range(rhomax)]
+
+    #sumone = [[sum([data[i][z][j] for i in range(epoch)]) for j in range(horizon)] for z in range(rhomax)]
+    #means = [[v/float(epoch) for v in u] for u in sumone]
+    #sumtwo = [[sum([(data[i][z][j]-means[z][j])**2 for i in range(epoch)]) for j in range(horizon)] for z in range(rhomax)]
+    #sdmoment = [[v/float(epoch) for v in u] for u in sumtwo]
+    #devs = [[math.sqrt(sdmoment[z][j]/float(epoch-1)) for j in range(horizon)] for z in range(rhomax)]
 
     X = np.array(range(horizon))
     for i in range(len(rhos)):
@@ -90,21 +97,21 @@ def show(data, epoch, horizon, rhomax, func):
 
     X = np.array([float(j)/float(rhomax-1) for j in range(rhomax)])
     Y = np.array([means[j][horizon-1] for j in range(rhomax)])
-    Z1 = np.array([means[j][horizon-1]+2*devs[j][horizon-1] for j in range(rhomax)])
-    Z2 = np.array([means[j][horizon-1]-2*devs[j][horizon-1] for j in range(rhomax)])
+    Z1 = np.array([means[j][horizon-1]+math.sqrt(2*(devs[j][horizon-1] ** 2) * math.log(1/delta)) for j in range(rhomax)])
+    Z2 = np.array([means[j][horizon-1]-math.sqrt(2*(devs[j][horizon-1] ** 2) * math.log(1/delta)) for j in range(rhomax)])
     pl.plot(X, Y)
     pl.plot(X, Z1, color="green")
     pl.plot(X, Z2, color="green")
     pl.xlabel(r"$\rho$")
-    pl.ylabel("simple regret after 2000 evaluations")
+    pl.ylabel("simple regret after " + str(HORIZON) + " evaluations")
     pl.show()
 
     X = np.array([float(j)/float(rhomax-1) for j in range(rhomax)])
     Y = np.array([means[j][horizon-1] for j in range(rhomax)])
-    E = np.array([2*devs[j][horizon-1] for j in range(rhomax)])
-    pl.errorbar(X, Y, yerr=E, errorevery=3)
+    E = np.array([math.sqrt(2*(devs[j][horizon-1] ** 2) * math.log(1/delta)) for j in range(rhomax)])
+    pl.errorbar(X, Y, yerr=E, color='black', errorevery=3)
     pl.xlabel(r"$\rho$")
-    pl.ylabel("simple regret after 2000 evaluations")
+    pl.ylabel("simple regret after " + str(HORIZON) + " evaluations")
     pl.show()
 
 #########
@@ -143,7 +150,7 @@ bbox2 = std_box(f2.f, f2.fmax)
 
 pool = mp.ProcessingPool(JOBS)
 def partial_regret_hoo(rhos):
-    return regret_hoo(bbox2, rhos, nu_, alpha_)
+    return regret_hoo(bbox1, rhos, nu_, alpha_)
 #partial_regret_hoo = ft.partial(regret_hoo, bbox=bbox1, nu=nu_, alpha=alpha_)
 
 data = [None for k in range(EPOCH)]
@@ -158,7 +165,7 @@ if PARALLEL:
 else:
     for k in range(EPOCH):
         for j in range(RHOMAX):
-            regrets = regret_hoo(bbox2, float(j)/float(RHOMAX), nu_, alpha_)
+            regrets = regret_hoo(bbox1, float(j)/float(RHOMAX), nu_, alpha_)
             for i in range(HORIZON):
                 current[j][i] += regrets[i]
             if VERBOSE:
@@ -167,4 +174,5 @@ else:
         current = [[0. for i in range(HORIZON)] for j in range(RHOMAX)]
 print("--- %s seconds ---" % (time.time() - start_time))
 
-show(data, EPOCH, HORIZON, RHOMAX, f2)
+bbox1.plot()
+show(data, EPOCH, HORIZON, RHOMAX, DELTA, f1)
