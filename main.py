@@ -16,6 +16,8 @@ import functools as ft
 import target
 import hoo
 
+sys.setrecursionlimit(10000)
+
 # Macros
 HORIZON = 5000
 RHOMAX = 20
@@ -36,8 +38,8 @@ nu_ = 1.
 # Utils #
 #########
 
-def std_box(f, fmax, nsplits, dim):
-    box = target.Box(f, fmax, nsplits, dim)
+def std_box(f, fmax, nsplits, dim, side):
+    box = target.Box(f, fmax, nsplits, dim, side)
     box.std_noise(SIGMA)
     box.std_partition()
 
@@ -122,10 +124,10 @@ start_time = time.time()
 
 # First test
 f1 = target.DoubleSine(0.3, 0.8, 0.5)
-bbox1 = std_box(f1.f, f1.fmax, 2, 1)
+bbox1 = std_box(f1.f, f1.fmax, 2, 1, (0., 1.))
 
 f2 = target.DiffFunc(0.5)
-bbox2 = std_box(f2.f, f2.fmax, 2, 1)
+bbox2 = std_box(f2.f, f2.fmax, 3, 1, (0., 1.))
 
 # Simple regret evolutiion with respect to different rhos
 #regrets = np.zeros(RHOMAX)
@@ -148,18 +150,18 @@ bbox2 = std_box(f2.f, f2.fmax, 2, 1)
 
 # 2D function test
 f3 = target.Himmelblau()
-bbox3 = std_box(f3.f, f3.fmax, 2, 2)
-bbox3.plot2D()
+bbox3 = std_box(f3.f, f3.fmax, 3, 2, (-6., 6.))
+#bbox3.plot2D()
 
+# Computing regrets
 pool = mp.ProcessingPool(JOBS)
 def partial_regret_hoo(rhos):
-    return regret_hoo(bbox1, rhos, nu_, alpha_)
+    return regret_hoo(bbox3, rhos, nu_, alpha_)
 #partial_regret_hoo = ft.partial(regret_hoo, bbox=bbox1, nu=nu_, alpha=alpha_)
 
 data = [None for k in range(EPOCH)]
 current = [[0. for i in range(HORIZON)] for j in range(RHOMAX)]
 
-"""
 if PARALLEL:
     for k in range(EPOCH):
         data[k] = np.array(pool.map(partial_regret_hoo, rhos_))
@@ -169,7 +171,7 @@ if PARALLEL:
 else:
     for k in range(EPOCH):
         for j in range(RHOMAX):
-            regrets = regret_hoo(bbox1, float(j)/float(RHOMAX), nu_, alpha_)
+            regrets = regret_hoo(bbox3, float(j)/float(RHOMAX), nu_, alpha_)
             for i in range(HORIZON):
                 current[j][i] += regrets[i]
             if VERBOSE:
@@ -179,5 +181,4 @@ else:
 print("--- %s seconds ---" % (time.time() - start_time))
 
 #bbox1.plot1D()
-show(data, EPOCH, HORIZON, RHOMAX, DELTA, f1)
-"""
+show(data, EPOCH, HORIZON, RHOMAX, DELTA, f3)

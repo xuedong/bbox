@@ -62,7 +62,7 @@ class Himmelblau:
         self.fmax = 0.
 
     def f(self, x):
-        return -(x[0]**2+x[1]-11.)**2-(x[0]+x[1]**2-7)**2
+        return -(x[0]**2+x[1]-11.)**2-(x[0]+x[1]**2-7.)**2
 
     def fmax(self):
         return self.fmax
@@ -71,7 +71,7 @@ class Himmelblau:
 Function domain partitioning
 """
 class Box:
-    def __init__(self, f, fmax, nsplits, dim):
+    def __init__(self, f, fmax, nsplits, dim, side):
         self.f_noised = None
         self.f_mean = f
         self.fmax = fmax
@@ -82,7 +82,7 @@ class Box:
         self.dim = dim
         self.support = []
         for i in range(dim):
-            self.support.append((0., 1.))
+            self.support.append(side)
 
     def std_center(self, support):
         return [(support[i][0]+support[i][1])/2. for i in range(len(support))]
@@ -92,7 +92,7 @@ class Box:
 
     def std_split(self, support):
         lens = np.array([support[i][1]-support[i][0] for i in range(len(support))])
-        max_index = np.argmin(lens)
+        max_index = np.argmax(lens)
         max_length = np.max(lens)
         a, b = support[max_index]
         step = max_length/self.nsplits
