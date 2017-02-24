@@ -202,7 +202,7 @@ for i in range(EPOCH):
 
         while count < HORIZON:
             for k in range(len(rhos_)):
-                x, noisy, existed = tree.sample(alpha_, k)
+                x, noisy, existed = tree.sample_bis(alpha_, k)
                 cum[k] += bbox1.fmax - bbox1.f_mean(x)
                 count += existed
                 emp[k] += noisy
