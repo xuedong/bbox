@@ -71,11 +71,13 @@ class HTree:
 
     def sample(self, alpha):
         leaf = self.explore()
+        existed = False
 
         if leaf.noisy is None:
             x = self.box.rand(leaf.support)
             leaf.evaluated = x
             leaf.noisy = self.box.f_noised(x)
+            existed = True
         leaf.update_path(leaf.noisy, alpha)
 
-        return leaf.evaluated
+        return leaf.evaluated, leaf.noisy, existed
