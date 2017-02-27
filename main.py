@@ -64,7 +64,7 @@ def regret_hoo(bbox, rho, nu, alpha):
     return y
 
 # Plot regret curve
-def show(data, data_poo, epoch, horizon, rhomax, delta, func):
+def show(data, data_poo, epoch, horizon, rhomax, delta):
     rhos = [int(rhomax*k/4.) for k in range(4)]
     #rhos = [0, 6, 12, 18]
     style = [[5,5], [1,3], [5,3,1,3], [5,2,5,2,5,10]]
@@ -161,7 +161,7 @@ bbox3 = std_box(f3.f, f3.fmax, 3, 2, (-6., 6.))
 # Computing regrets
 pool = mp.ProcessingPool(JOBS)
 def partial_regret_hoo(rhos):
-    return regret_hoo(bbox1, rhos, nu_, alpha_)
+    return regret_hoo(bbox2, rhos, nu_, alpha_)
 #partial_regret_hoo = ft.partial(regret_hoo, bbox=bbox1, nu=nu_, alpha=alpha_)
 
 data = [None for k in range(EPOCH)]
@@ -180,7 +180,7 @@ if PARALLEL:
 else:
     for k in range(EPOCH):
         for j in range(RHOMAX):
-            regrets = regret_hoo(bbox1, float(j)/float(RHOMAX), nu_, alpha_)
+            regrets = regret_hoo(bbox2, float(j)/float(RHOMAX), nu_, alpha_)
             for i in range(HORIZON):
                 current[j][i] += regrets[i]
             if VERBOSE:
@@ -194,7 +194,7 @@ if VERBOSE:
 
 dataPOO = [[0. for j in range(HORIZON)] for i in range(EPOCH)]
 for i in range(EPOCH):
-        tree = poo.PTree(bbox1.support, None, 0, rhos_, nu_, bbox1)
+        tree = poo.PTree(bbox2.support, None, 0, rhos_, nu_, bbox1)
         count = 0
         cum = [0.] * len(rhos_)
         emp = [0.] * len(rhos_)
@@ -202,8 +202,8 @@ for i in range(EPOCH):
 
         while count < HORIZON:
             for k in range(len(rhos_)):
-                x, noisy, existed = tree.sample_bis(alpha_, k)
-                cum[k] += bbox1.fmax - bbox1.f_mean(x)
+                x, noisy, existed = tree.sample(alpha_, k)
+                cum[k] += bbox2.fmax - bbox2.f_mean(x)
                 count += existed
                 emp[k] += noisy
                 smp[k] += 1
@@ -215,4 +215,4 @@ for i in range(EPOCH):
 print("--- %s seconds ---" % (time.time() - start_time))
 
 #bbox1.plot1D()
-show(data, dataPOO, EPOCH, HORIZON, RHOMAX, DELTA, f1)
+show(data, dataPOO, EPOCH, HORIZON, RHOMAX, DELTA)
