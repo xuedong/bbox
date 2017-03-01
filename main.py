@@ -120,9 +120,9 @@ def show(data, data_poo, epoch, horizon, rhomax, delta):
     pl.ylabel("simple regret after " + str(HORIZON) + " evaluations")
     pl.show()
 
-#########
-# Tests #
-#########
+#########################
+# Tests for HOO methods #
+#########################
 
 start_time = time.time()
 
@@ -216,3 +216,7 @@ print("--- %s seconds ---" % (time.time() - start_time))
 
 #bbox1.plot1D()
 show(data, dataPOO, EPOCH, HORIZON, RHOMAX, DELTA)
+
+########################
+# Tests for BO methods #
+########################
