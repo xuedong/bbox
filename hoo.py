@@ -24,7 +24,8 @@ class HTree:
         self.children = []
 
     def add_children(self):
-        supports = self.box.split(self.support)
+        supports = self.box.split(self.support, self.box.nsplits)
+        #print(supports)
 
         self.children = [HTree(s, self, self.depth + 1, self.rho, self.nu, self.box) for s in supports]
 

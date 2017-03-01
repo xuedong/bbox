@@ -12,7 +12,7 @@ import matplotlib as mpl
 from mpl_toolkits.mplot3d import Axes3D
 
 """
-Target function
+Target functions
 """
 class DoubleSine:
     def __init__(self, rho1, rho2, tmax):
@@ -70,6 +70,27 @@ class Himmelblau:
 """
 Function domain partitioning
 """
+def std_center(support):
+    return [(support[i][0]+support[i][1])/2. for i in range(len(support))]
+
+def std_rand(support):
+    return [(support[i][0]+(support[i][1]-support[i][0])*random.random()) for i in range(len(support))]
+
+def std_split(support, nsplits):
+    lens = np.array([support[i][1]-support[i][0] for i in range(len(support))])
+    max_index = np.argmax(lens)
+    max_length = np.max(lens)
+    a, b = support[max_index]
+    step = max_length/float(nsplits)
+    split = [(a+step*i, a+step*(i+1)) for i in range(nsplits)]
+
+    supports = [None for i in range(nsplits)]
+    for i in range(nsplits):
+        supports[i] = [support[j] for j in range(len(support))]
+        supports[i][max_index] = split[i]
+
+    return supports
+
 class Box:
     def __init__(self, f, fmax, nsplits, dim, side):
         self.f_noised = None
@@ -80,39 +101,19 @@ class Box:
         self.rand = None
         self.nsplits = nsplits
         self.dim = dim
-        self.support = []
-        for i in range(dim):
-            self.support.append(side)
-
-    def std_center(self, support):
-        return [(support[i][0]+support[i][1])/2. for i in range(len(support))]
-
-    def std_rand(self, support):
-        return [(support[i][0]+(support[i][1]-support[i][0])*random.random()) for i in range(len(support))]
-
-    def std_split(self, support):
-        lens = np.array([support[i][1]-support[i][0] for i in range(len(support))])
-        max_index = np.argmax(lens)
-        max_length = np.max(lens)
-        a, b = support[max_index]
-        step = max_length/self.nsplits
-        split = [(a+step*i, a+step*(i+1)) for i in range(self.nsplits)]
-
-        supports = [None for i in range(self.nsplits)]
-        for i in range(self.nsplits):
-            supports[i] = [support[j] for j in range(len(support))]
-            supports[i][max_index] = split[i]
-
-        return supports
-
-    def std_noise(self, sigma):
-        self.f_noised = lambda x: self.f_mean(x) + np.random.normal(0, sigma)
-        #self.f_noised = lambda x: self.f_mean(x) + random.random()
+        self.side = side
 
     def std_partition(self):
-        self.center = self.std_center
-        self.rand = self.std_rand
-        self.split = self.std_split
+        self.center = std_center
+        self.rand = std_rand
+        self.split = std_split
+        self.support = []
+        for i in range(self.dim):
+            self.support.append(self.side)
+
+    def std_noise(self, sigma):
+        self.f_noised = lambda x: self.f_mean(x) + sigma*np.random.normal(0, sigma)
+        #self.f_noised = lambda x: self.f_mean(x) + sigma*random.random()
 
     def plot1D(self):
         """

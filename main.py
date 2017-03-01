@@ -17,7 +17,9 @@ import target
 import hoo
 import poo
 
+# System settings
 sys.setrecursionlimit(10000)
+#random.seed(42)
 
 # Macros
 HORIZON = 5000
@@ -72,13 +74,7 @@ def show(data, data_poo, epoch, horizon, rhomax, delta):
     means = [[sum([data[k][j][i] for k in range(epoch)])/float(epoch) for i in range(horizon)] for j in range(rhomax)]
     devs = [[math.sqrt(sum([(data[k][j][i]-means[j][i])**2 for k in range(epoch)])/(float(epoch)*float(epoch-1))) for i in range(horizon)] for j in range(rhomax)]
 
-    means_poo = [sum([data_poo[u][v] for u in range(epoch)])/float(epoch) for v in range(horizon)]
-
-    #sumone = [[sum([data[i][z][j] for i in range(epoch)]) for j in range(horizon)] for z in range(rhomax)]
-    #means = [[v/float(epoch) for v in u] for u in sumone]
-    #sumtwo = [[sum([(data[i][z][j]-means[z][j])**2 for i in range(epoch)]) for j in range(horizon)] for z in range(rhomax)]
-    #sdmoment = [[v/float(epoch) for v in u] for u in sumtwo]
-    #devs = [[math.sqrt(sdmoment[z][j]/float(epoch-1)) for j in range(horizon)] for z in range(rhomax)]
+    means_poo = [sum([data_poo[u][v]/float(epoch) for u in range(epoch)]) for v in range(horizon)]
 
     X = np.array(range(horizon))
     for i in range(len(rhos)):
@@ -105,7 +101,9 @@ def show(data, data_poo, epoch, horizon, rhomax, delta):
     X = np.array([float(j)/float(rhomax-1) for j in range(rhomax)])
     Y = np.array([means[j][horizon-1] for j in range(rhomax)])
     Z1 = np.array([means[j][horizon-1]+math.sqrt(2*(devs[j][horizon-1] ** 2) * math.log(1/delta)) for j in range(rhomax)])
+    #Z1 = np.array([means[j][horizon-1]+2*devs[j][horizon-1] for j in range(rhomax)])
     Z2 = np.array([means[j][horizon-1]-math.sqrt(2*(devs[j][horizon-1] ** 2) * math.log(1/delta)) for j in range(rhomax)])
+    #Z2 = np.array([means[j][horizon-1]-2*devs[j][horizon-1] for j in range(rhomax)])
     pl.plot(X, Y)
     pl.plot(X, Z1, color="green")
     pl.plot(X, Z2, color="green")
@@ -116,6 +114,7 @@ def show(data, data_poo, epoch, horizon, rhomax, delta):
     X = np.array([float(j)/float(rhomax-1) for j in range(rhomax)])
     Y = np.array([means[j][horizon-1] for j in range(rhomax)])
     E = np.array([math.sqrt(2*(devs[j][horizon-1] ** 2) * math.log(1/delta)) for j in range(rhomax)])
+    #E = np.array([2*devs[j][horizon-1] for j in range(rhomax)])
     pl.errorbar(X, Y, yerr=E, color='black', errorevery=3)
     pl.xlabel(r"$\rho$")
     pl.ylabel("simple regret after " + str(HORIZON) + " evaluations")
@@ -155,13 +154,13 @@ bbox2 = std_box(f2.f, f2.fmax, 3, 1, (0., 1.))
 
 # 2D function test
 f3 = target.Himmelblau()
-bbox3 = std_box(f3.f, f3.fmax, 3, 2, (-6., 6.))
+bbox3 = std_box(f3.f, f3.fmax, 2, 2, (-6., 6.))
 #bbox3.plot2D()
 
 # Computing regrets
 pool = mp.ProcessingPool(JOBS)
 def partial_regret_hoo(rhos):
-    return regret_hoo(bbox2, rhos, nu_, alpha_)
+    return regret_hoo(bbox3, rhos, nu_, alpha_)
 #partial_regret_hoo = ft.partial(regret_hoo, bbox=bbox1, nu=nu_, alpha=alpha_)
 
 data = [None for k in range(EPOCH)]
@@ -180,7 +179,7 @@ if PARALLEL:
 else:
     for k in range(EPOCH):
         for j in range(RHOMAX):
-            regrets = regret_hoo(bbox2, float(j)/float(RHOMAX), nu_, alpha_)
+            regrets = regret_hoo_bis(bbox3, float(j)/float(RHOMAX), nu_, alpha_)
             for i in range(HORIZON):
                 current[j][i] += regrets[i]
             if VERBOSE:
@@ -194,22 +193,23 @@ if VERBOSE:
 
 dataPOO = [[0. for j in range(HORIZON)] for i in range(EPOCH)]
 for i in range(EPOCH):
-        tree = poo.PTree(bbox2.support, None, 0, rhos_, nu_, bbox1)
+        tree = poo.PTree(bbox3.support, None, 0, rhos_, nu_, bbox3)
         count = 0
-        cum = [0.] * len(rhos_)
-        emp = [0.] * len(rhos_)
-        smp = [0] * len(rhos_)
+        length = len(rhos_)
+        cum = [0.] * length
+        emp = [0.] * length
+        smp = [0] * length
 
         while count < HORIZON:
-            for k in range(len(rhos_)):
+            for k in range(length):
                 x, noisy, existed = tree.sample(alpha_, k)
-                cum[k] += bbox2.fmax - bbox2.f_mean(x)
+                cum[k] += bbox3.fmax - bbox3.f_mean(x)
                 count += existed
                 emp[k] += noisy
                 smp[k] += 1
 
                 if existed and count <= HORIZON:
-                    best_k = max(range(len(rhos_)), key=lambda x: (-float("inf") if smp[k] == 0 else emp[x]/smp[k]))
+                    best_k = max(range(length), key=lambda x: (-float("inf") if smp[k] == 0 else emp[x]/smp[k]))
                     dataPOO[i][count-1] = 1 if smp[best_k] == 0 else cum[best_k]/float(smp[best_k])
 
 print("--- %s seconds ---" % (time.time() - start_time))
