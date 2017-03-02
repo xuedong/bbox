@@ -120,6 +120,18 @@ def show(data, data_poo, epoch, horizon, rhomax, delta):
     pl.ylabel("simple regret after " + str(HORIZON) + " evaluations")
     pl.show()
 
+# How to choose rhos to be used
+def get_rhos(nsplits, rhomax, horizon):
+    dmax = math.log(K)/math.log(1./rhomax)
+    n = 0
+    N = 1
+
+    while n < horizon:
+        if n == 0 or n == 1:
+            threshold = -float("inf")
+        else:
+            threshold = 0.5 * dmax * math.log(n/math.log(n))
+
 #########################
 # Tests for HOO methods #
 #########################
@@ -192,25 +204,25 @@ if VERBOSE:
     print("POO!")
 
 dataPOO = [[0. for j in range(HORIZON)] for i in range(EPOCH)]
-for i in range(EPOCH):
-        tree = poo.PTree(bbox3.support, None, 0, rhos_, nu_, bbox3)
-        count = 0
-        length = len(rhos_)
-        cum = [0.] * length
-        emp = [0.] * length
-        smp = [0] * length
+#for i in range(EPOCH):
+#    tree = poo.PTree(bbox3.support, None, 0, rhos_, nu_, bbox3)
+#    count = 0
+#    length = len(rhos_)
+#    cum = [0.] * length
+#    emp = [0.] * length
+#    smp = [0] * length
 
-        while count < HORIZON:
-            for k in range(length):
-                x, noisy, existed = tree.sample(alpha_, k)
-                cum[k] += bbox3.fmax - bbox3.f_mean(x)
-                count += existed
-                emp[k] += noisy
-                smp[k] += 1
+#    while count < HORIZON:
+#        for k in range(length):
+#            x, noisy, existed = tree.sample(alpha_, k)
+#            cum[k] += bbox3.fmax - bbox3.f_mean(x)
+#            count += existed
+#            emp[k] += noisy
+#            smp[k] += 1
 
-                if existed and count <= HORIZON:
-                    best_k = max(range(length), key=lambda x: (-float("inf") if smp[k] == 0 else emp[x]/smp[k]))
-                    dataPOO[i][count-1] = 1 if smp[best_k] == 0 else cum[best_k]/float(smp[best_k])
+#            if existed and count <= HORIZON:
+#                best_k = max(range(length), key=lambda x: (-float("inf") if smp[k] == 0 else emp[x]/smp[k]))
+#                dataPOO[i][count-1] = 1 if smp[best_k] == 0 else cum[best_k]/float(smp[best_k])
 
 print("--- %s seconds ---" % (time.time() - start_time))
 
