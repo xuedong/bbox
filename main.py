@@ -16,6 +16,7 @@ import functools as ft
 import target
 import hoo
 import poo
+import utils
 
 # System settings
 sys.setrecursionlimit(10000)
@@ -38,117 +39,6 @@ alpha_ = math.log(HORIZON) * (SIGMA ** 2)
 rhos_hoo = [float(j)/float(RHOMAX-1) for j in range(RHOMAX)]
 nu_ = 1.
 
-#########
-# Utils #
-#########
-
-def std_box(f, fmax, nsplits, dim, side):
-    box = target.Box(f, fmax, nsplits, dim, side)
-    box.std_noise(SIGMA)
-    box.std_partition()
-
-    return box
-
-# Regret for HOO
-def regret_hoo(bbox, rho, nu, alpha):
-    y = np.zeros(HORIZON)
-    #y = [0. for i in range(HORIZON)]
-    htree = hoo.HTree(bbox.support, None, 0, rho, nu, bbox)
-    cum = 0.
-
-    for i in range(HORIZON):
-        if UPDATE and alpha < math.log(i+1) * (SIGMA ** 2):
-            alpha += 1
-            htree.update(alpha)
-        x, _, _ = htree.sample(alpha)
-        cum += bbox.fmax - bbox.f_mean(x)
-        y[i] = cum/(i+1)
-
-    return y
-
-# Plot regret curve
-def show(data, data_poo, epoch, horizon, rhos_hoo, rhos_poo, delta):
-    length_hoo = len(rhos_hoo)
-    length_poo = len(rhos_poo)
-    rhostoshow = [int(length_hoo*k/4.) for k in range(4)]
-    #rhostoshow = [0, 6, 12, 18]
-    #rhostoshow = [0, 1, 3, 7, 15]
-    style = [[5,5], [1,3], [5,3,1,3], [5,2,5,2,5,10]]
-    #style = [[5,5], [1,3], [5,3,1,3], [5,2,5,2,5,10], [3, 1]]
-
-    means = [[sum([data[k][j][i] for k in range(epoch)])/float(epoch) for i in range(horizon)] for j in range(length_hoo)]
-    devs = [[math.sqrt(sum([(data[k][j][i]-means[j][i])**2 for k in range(epoch)])/(float(epoch)*float(epoch-1))) for i in range(horizon)] for j in range(length_hoo)]
-
-    means_poo = [sum([data_poo[u][v]/float(epoch) for u in range(epoch)]) for v in range(horizon)]
-
-    X = np.array(range(horizon))
-    for i in range(len(rhostoshow)):
-        k = rhostoshow[i]
-        label__ = r"$\mathtt{HOO}, \rho = " + str(float(k)/float(length_hoo)) + "$"
-        pl.plot(X, np.array(means[k]), label=label__, dashes=style[i])
-    pl.plot(X, np.array(means_poo), label=r"$\mathtt{POO}$")
-    pl.legend()
-    pl.xlabel("number of evaluations")
-    pl.ylabel("simple regret")
-    pl.show()
-
-    X = np.array(map(math.log, range(horizon)[1:]))
-    for i in range(len(rhostoshow)):
-        k = rhostoshow[i]
-        label__ = r"$\mathtt{HOO}, \rho = " + str(float(k)/float(length_hoo)) + "$"
-        pl.plot(X, np.array(map(math.log, means[k][1:])), label=label__, dashes=style[i])
-    pl.plot(X, np.array(map(math.log, means_poo[1:])), label=r"$\mathtt{POO}$")
-    pl.legend(loc=3)
-    pl.xlabel("number of evaluations (log-scale)")
-    pl.ylabel("simple regret")
-    pl.show()
-
-    X = np.array([float(j)/float(length_hoo-1) for j in range(length_hoo)])
-    Y = np.array([means[j][horizon-1] for j in range(length_hoo)])
-    Z1 = np.array([means[j][horizon-1]+math.sqrt(2*(devs[j][horizon-1] ** 2) * math.log(1/delta)) for j in range(length_hoo)])
-    #Z1 = np.array([means[j][horizon-1]+2*devs[j][horizon-1] for j in range(length_hoo)])
-    Z2 = np.array([means[j][horizon-1]-math.sqrt(2*(devs[j][horizon-1] ** 2) * math.log(1/delta)) for j in range(length_hoo)])
-    #Z2 = np.array([means[j][horizon-1]-2*devs[j][horizon-1] for j in range(length_hoo)])
-    pl.plot(X, Y)
-    pl.plot(X, Z1, color="green")
-    pl.plot(X, Z2, color="green")
-    pl.xlabel(r"$\rho$")
-    pl.ylabel("simple regret after " + str(HORIZON) + " evaluations")
-    pl.show()
-
-    X = np.array([float(j)/float(length-1) for j in range(length_hoo)])
-    Y = np.array([means[j][horizon-1] for j in range(length_hoo)])
-    E = np.array([math.sqrt(2*(devs[j][horizon-1] ** 2) * math.log(1/delta)) for j in range(length_hoo)])
-    #E = np.array([2*devs[j][horizon-1] for j in range(length_hoo)])
-    pl.errorbar(X, Y, yerr=E, color='black', errorevery=3)
-    pl.xlabel(r"$\rho$")
-    pl.ylabel("simple regret after " + str(HORIZON) + " evaluations")
-    pl.show()
-
-# How to choose rhos to be used
-def get_rhos(nsplits, rhomax, horizon):
-    dmax = math.log(nsplits)/math.log(1./rhomax)
-    n = 0
-    N = 1
-    rhos = np.array([rhomax])
-
-    while n < horizon:
-        if n == 0 or n == 1:
-            threshold = -float("inf")
-        else:
-            threshold = 0.5 * dmax * math.log(n/math.log(n))
-
-        while N <= threshold:
-            for i in range(N):
-                rho_current = math.pow(rhomax, 2.*N/(2*(i+1)))
-                rhos = np.append(rhos, rho_current)
-            n = 2*n
-            N = 2*N
-
-        n = n+N
-
-    return np.unique(np.sort(rhos))
-
 #########################
 # Tests for HOO methods #
 #########################
@@ -157,10 +47,10 @@ start_time = time.time()
 
 # First test
 f1 = target.DoubleSine(0.3, 0.8, 0.5)
-bbox1 = std_box(f1.f, f1.fmax, NSPLITS, 1, (0., 1.))
+bbox1 = utils.std_box(f1.f, f1.fmax, NSPLITS, 1, (0., 1.), SIGMA)
 
 f2 = target.DiffFunc(0.5)
-bbox2 = std_box(f2.f, f2.fmax, NSPLITS, 1, (0., 1.))
+bbox2 = utils.std_box(f2.f, f2.fmax, NSPLITS, 1, (0., 1.), SIGMA)
 
 # Simple regret evolutiion with respect to different rhos
 #regrets = np.zeros(RHOMAX)
@@ -183,18 +73,18 @@ bbox2 = std_box(f2.f, f2.fmax, NSPLITS, 1, (0., 1.))
 
 # 2D function test
 f3 = target.Himmelblau()
-bbox3 = std_box(f3.f, f3.fmax, NSPLITS, 2, (-6., 6.))
+bbox3 = utils.std_box(f3.f, f3.fmax, NSPLITS, 2, (-6., 6.), SIGMA)
 #bbox3.plot2D()
 
 # Computing regrets
 pool = mp.ProcessingPool(JOBS)
 def partial_regret_hoo(rho):
-    return regret_hoo(bbox2, rho, nu_, alpha_)
+    return utils.regret_hoo(bbox2, rho, nu_, alpha_, SIGMA, HORIZON, UPDATE)
 #partial_regret_hoo = ft.partial(regret_hoo, bbox=bbox1, nu=nu_, alpha=alpha_)
 
 data = [None for k in range(EPOCH)]
 current = [[0. for i in range(HORIZON)] for j in range(RHOMAX)]
-rhos_poo = get_rhos(NSPLITS, 0.9, HORIZON)
+rhos_poo = utils.get_rhos(NSPLITS, 0.9, HORIZON)
 
 # HOO
 if VERBOSE:
@@ -245,7 +135,7 @@ for i in range(EPOCH):
 print("--- %s seconds ---" % (time.time() - start_time))
 
 #bbox1.plot1D()
-show(data, dataPOO, EPOCH, HORIZON, rhos_hoo, rhos_poo, DELTA)
+utils.show(data, dataPOO, EPOCH, HORIZON, rhos_hoo, rhos_poo, DELTA)
 
 ########################
 # Tests for BO methods #
