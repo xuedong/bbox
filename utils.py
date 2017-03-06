@@ -8,6 +8,7 @@ import numpy as np
 import sys
 import math
 import random
+import pickle
 
 import target
 import hoo
@@ -22,8 +23,10 @@ def std_box(f, fmax, nsplits, dim, side, sigma):
 
 # Regret for HOO
 def regret_hoo(bbox, rho, nu, alpha, sigma, horizon, update):
-    y = np.zeros(horizon)
-    #y = [0. for i in range(horizon)]
+    #y = np.zeros(horizon)
+    y_cum = [0. for i in range(horizon)]
+    y_sim = [0. for i in range(horizon)]
+    x_sel = [None for i in range(horizon)]
     htree = hoo.HTree(bbox.support, None, 0, rho, nu, bbox)
     cum = 0.
 
@@ -33,12 +36,51 @@ def regret_hoo(bbox, rho, nu, alpha, sigma, horizon, update):
             htree.update(alpha)
         x, _, _ = htree.sample(alpha)
         cum += bbox.fmax - bbox.f_mean(x)
-        y[i] = cum/(i+1)
+        y_cum[i] = cum/(i+1)
+        x_sel[i] = x
+        z = random.choice(x_sel[0:(i+1)])
+        y_sim[i] = bbox.fmax - bbox.f_mean(z)
 
-    return y
+    return y_cum, y_sim, x_sel
+
+def regret_poo(bbox, rhos, nu, alpha, horizon, epoch):
+    y_cum = [[0. for j in range(horizon)] for i in range(epoch)]
+    y_sim = [[0. for j in range(horizon)] for i in range(epoch)]
+    x_sel = [[None for j in range(horizon)] for i in range(epoch)]
+    for i in range(epoch):
+        ptree = poo.PTree(bbox.support, None, 0, rhos, nu, bbox)
+        count = 0
+        length = len(rhos)
+        cum = [0.] * length
+        emp = [0.] * length
+        smp = [0] * length
+
+        while count < horizon:
+            for k in range(length):
+                x, noisy, existed = ptree.sample(alpha, k)
+                cum[k] += bbox.fmax - bbox.f_mean(x)
+                count += existed
+                emp[k] += noisy
+                smp[k] += 1
+
+                if existed and count <= horizon:
+                    best_k = max(range(length), key=lambda x: (-float("inf") if smp[k] == 0 else emp[x]/smp[k]))
+                    y_cum[i][count-1] = 1 if smp[best_k] == 0 else cum[best_k]/float(smp[best_k])
+                    x_sel[i][count-1] = x
+                    z = random.choice(x_sel[i][0:count])
+                    y_sim[i][count-1] = bbox.fmax - bbox.f_mean(z)
+
+    return y_cum, y_sim, x_sel
 
 # Plot regret curve
-def show(data, data_poo, epoch, horizon, rhos_hoo, rhos_poo, delta):
+def show(path, epoch, horizon, rhos_hoo, rhos_poo, delta):
+    data = [None for k in range(epoch)]
+    for k in range(epoch):
+        with open(path+"HOO"+str(k+1), 'rb') as file:
+            data[k] = pickle.load(file)
+    with open(path+"POO", 'rb') as file:
+        data_poo = pickle.load(file)
+
     length_hoo = len(rhos_hoo)
     length_poo = len(rhos_poo)
     rhostoshow = [int(length_hoo*k/4.) for k in range(4)]
@@ -59,7 +101,7 @@ def show(data, data_poo, epoch, horizon, rhos_hoo, rhos_poo, delta):
         pl.plot(X, np.array(means[k]), label=label__, dashes=style[i])
     pl.plot(X, np.array(means_poo), label=r"$\mathtt{POO}$")
     pl.legend()
-    pl.xlabel("number of evaluations")
+    pl.xlabel("numbe of evaluations")
     pl.ylabel("simple regret")
     pl.show()
 

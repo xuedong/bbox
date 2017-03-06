@@ -9,6 +9,7 @@ import os
 import sys
 import math
 import random
+import pickle
 import time
 import pathos.multiprocessing as mp
 import functools as ft
@@ -33,6 +34,8 @@ VERBOSE = True
 PARALLEL = True
 JOBS = 8
 NSPLITS = 2
+SAVE = True
+PATH = "data/"
 
 # Global Parameters
 alpha_ = math.log(HORIZON) * (SIGMA ** 2)
@@ -79,8 +82,9 @@ bbox3 = utils.std_box(f3.f, f3.fmax, NSPLITS, 2, (-6., 6.), SIGMA)
 # Computing regrets
 pool = mp.ProcessingPool(JOBS)
 def partial_regret_hoo(rho):
-    return utils.regret_hoo(bbox2, rho, nu_, alpha_, SIGMA, HORIZON, UPDATE)
-#partial_regret_hoo = ft.partial(regret_hoo, bbox=bbox1, nu=nu_, alpha=alpha_)
+    cum, sim, sel = utils.regret_hoo(bbox2, rho, nu_, alpha_, SIGMA, HORIZON, UPDATE)
+    return sim
+#partial_regret_hoo = ft.partial(utils.regret_cumulative_hoo, bbox=bbox1, nu=nu_, alpha=alpha_, SIGMA, HORIZON, UPDATE)
 
 data = [None for k in range(EPOCH)]
 current = [[0. for i in range(HORIZON)] for j in range(RHOMAX)]
@@ -92,50 +96,44 @@ if VERBOSE:
 
 if PARALLEL:
     for k in range(EPOCH):
-        data[k] = np.array(pool.map(partial_regret_hoo, rhos_hoo))
+        data[k] = pool.map(partial_regret_hoo, rhos_hoo)
         if VERBOSE:
             print(str(k+1)+"/"+str(EPOCH))
         #print(regrets.shape)
 else:
     for k in range(EPOCH):
         for j in range(len(rhos_hoo)):
-            regrets = regret_hoo_bis(bbox2, float(j)/float(len(rhos_hoo)), nu_, alpha_)
+            cums, sims, sels = utils.regret_hoo(bbox2, float(j)/float(len(rhos_hoo)), nu_, alpha_, SIGMA, HORIZON, UPDATE)
             for i in range(HORIZON):
-                current[j][i] += regrets[i]
+                current[j][i] += sims[i]
             if VERBOSE:
                 print(str(1+j+k*len(rhos_hoo))+"/"+str(EPOCH*len(rhos_hoo)))
         data[k] = current
         current = [[0. for i in range(HORIZON)] for j in range(len(rhos_hoo))]
 
+#print(data[0])
+
 # POO
 if VERBOSE:
     print("POO!")
 
-dataPOO = [[0. for j in range(HORIZON)] for i in range(EPOCH)]
-for i in range(EPOCH):
-    ptree = poo.PTree(bbox2.support, None, 0, rhos_poo, nu_, bbox2)
-    count = 0
-    length = len(rhos_poo)
-    cum = [0.] * length
-    emp = [0.] * length
-    smp = [0] * length
+pcum, psim, psel = utils.regret_poo(bbox2, rhos_poo, nu_, alpha_, HORIZON, EPOCH)
+data_poo = psim
 
-    while count < HORIZON:
-        for k in range(length):
-            x, noisy, existed = ptree.sample(alpha_, k)
-            cum[k] += bbox2.fmax - bbox2.f_mean(x)
-            count += existed
-            emp[k] += noisy
-            smp[k] += 1
-
-            if existed and count <= HORIZON:
-                best_k = max(range(length), key=lambda x: (-float("inf") if smp[k] == 0 else emp[x]/smp[k]))
-                dataPOO[i][count-1] = 1 if smp[best_k] == 0 else cum[best_k]/float(smp[best_k])
-
+#print(dataPOO)
 print("--- %s seconds ---" % (time.time() - start_time))
 
+if SAVE and VERBOSE:
+    print("Writing data...")
+    for k in range(EPOCH):
+        with open("data/HOO"+str(k+1), 'wb') as file:
+            pickle.dump(data[k], file)
+        print(str(k+1)+"/"+str(EPOCH))
+    with open("data/POO", 'wb') as file:
+        pickle.dump(data_poo, file)
+
 #bbox1.plot1D()
-utils.show(data, dataPOO, EPOCH, HORIZON, rhos_hoo, rhos_poo, DELTA)
+utils.show(PATH, EPOCH, HORIZON, rhos_hoo, rhos_poo, DELTA)
 
 ########################
 # Tests for BO methods #
