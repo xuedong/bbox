@@ -24,11 +24,11 @@ sys.setrecursionlimit(10000)
 #random.seed(42)
 
 # Macros
-HORIZON = 5000
+HORIZON = 500
 RHOMAX = 20
 SIGMA = 0.1
 DELTA = 0.05
-EPOCH = 20
+EPOCH = 10000
 UPDATE = False
 VERBOSE = True
 PARALLEL = True

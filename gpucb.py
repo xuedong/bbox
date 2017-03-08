@@ -19,9 +19,12 @@ def basis_cst(X):
 
 def sq_dist(A, B):
     d1, n = A.shape
-    m, d2 = B.shape
-    try:
-        d1 == d2
-    except:
-        e = sys.exc_info()[0]
-        write_to_page("<p>Error: column lengths must agree</p>" % e)
+    d2, m = B.shape
+
+    mu = float(m)/float(n+m)*np.mean(B, 1) + float(n)/float(n+m)*np.mean(A, 1)
+    print(mu)
+    print(np.tile(A, (1, n)))
+    A = A - np.tile(A, (1, n))
+    B = B - np.tile(B, (1, m))
+
+    return mu
