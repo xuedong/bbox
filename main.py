@@ -17,7 +17,10 @@ import functools as ft
 import target
 import hoo
 import poo
-import utils
+import utils_oo
+
+import basis
+import utils_bo
 
 # System settings
 sys.setrecursionlimit(10000)
@@ -28,7 +31,7 @@ HORIZON = 500
 RHOMAX = 20
 SIGMA = 0.1
 DELTA = 0.05
-EPOCH = 10000
+EPOCH = 10
 UPDATE = False
 VERBOSE = True
 PARALLEL = True
@@ -50,10 +53,10 @@ start_time = time.time()
 
 # First test
 f1 = target.DoubleSine(0.3, 0.8, 0.5)
-bbox1 = utils.std_box(f1.f, f1.fmax, NSPLITS, 1, (0., 1.), SIGMA)
+bbox1 = utils_oo.std_box(f1.f, f1.fmax, NSPLITS, 1, (0., 1.), SIGMA)
 
 f2 = target.DiffFunc(0.5)
-bbox2 = utils.std_box(f2.f, f2.fmax, NSPLITS, 1, (0., 1.), SIGMA)
+bbox2 = utils_oo.std_box(f2.f, f2.fmax, NSPLITS, 1, (0., 1.), SIGMA)
 
 # Simple regret evolutiion with respect to different rhos
 #regrets = np.zeros(RHOMAX)
@@ -76,19 +79,19 @@ bbox2 = utils.std_box(f2.f, f2.fmax, NSPLITS, 1, (0., 1.), SIGMA)
 
 # 2D function test
 f3 = target.Himmelblau()
-bbox3 = utils.std_box(f3.f, f3.fmax, NSPLITS, 2, (-6., 6.), SIGMA)
+bbox3 = utils_oo.std_box(f3.f, f3.fmax, NSPLITS, 2, (-6., 6.), SIGMA)
 #bbox3.plot2D()
 
 # Computing regrets
 pool = mp.ProcessingPool(JOBS)
 def partial_regret_hoo(rho):
-    cum, sim, sel = utils.regret_hoo(bbox2, rho, nu_, alpha_, SIGMA, HORIZON, UPDATE)
+    cum, sim, sel = utils_oo.regret_hoo(bbox2, rho, nu_, alpha_, SIGMA, HORIZON, UPDATE)
     return sim
-#partial_regret_hoo = ft.partial(utils.regret_cumulative_hoo, bbox=bbox1, nu=nu_, alpha=alpha_, SIGMA, HORIZON, UPDATE)
+#partial_regret_hoo = ft.partial(utils_oo.regret_cumulative_hoo, bbox=bbox1, nu=nu_, alpha=alpha_, SIGMA, HORIZON, UPDATE)
 
 data = [None for k in range(EPOCH)]
 current = [[0. for i in range(HORIZON)] for j in range(RHOMAX)]
-rhos_poo = utils.get_rhos(NSPLITS, 0.9, HORIZON)
+rhos_poo = utils_oo.get_rhos(NSPLITS, 0.9, HORIZON)
 
 # HOO
 if VERBOSE:
@@ -117,7 +120,7 @@ else:
 if VERBOSE:
     print("POO!")
 
-pcum, psim, psel = utils.regret_poo(bbox2, rhos_poo, nu_, alpha_, HORIZON, EPOCH)
+pcum, psim, psel = utils_oo.regret_poo(bbox2, rhos_poo, nu_, alpha_, HORIZON, EPOCH)
 data_poo = psim
 
 #print(dataPOO)
@@ -133,7 +136,7 @@ if SAVE and VERBOSE:
         pickle.dump(data_poo, file)
 
 #bbox1.plot1D()
-utils.show(PATH, EPOCH, HORIZON, rhos_hoo, rhos_poo, DELTA)
+utils_oo.show(PATH, EPOCH, HORIZON, rhos_hoo, rhos_poo, DELTA)
 
 ########################
 # Tests for BO methods #
