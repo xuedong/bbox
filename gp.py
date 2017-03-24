@@ -94,7 +94,7 @@ class GP:
         K2i = K[T, i-1]
         Kii = K[i-1, i-1]
 
-        RC = self.RC
+        RC = self.RC.copy()
         #print(RC)
         RC11 = RC[0:(i-1), 0:(i-1)]
         #print(RC11)
@@ -110,27 +110,27 @@ class GP:
         #print(RC31)
         RC1 = np.concatenate((RC11, RC13), 1)
         RC3 = np.concatenate((RC31, S33), 1)
-        self.RC = np.concatenate((RC1, RC3), 0)
+        RC = np.concatenate((RC1, RC3), 0)
 
         if H:
             H1 = H[T,]
             Hi = H[i,]
 
-            self.RHCH = approx_chol(np.dot(H1.T, solve_chol(self.RC, H1)))
+            RHCH = approx_chol(np.dot(H1.T, solve_chol(RC, H1)))
             Ri = Hi - np.dot(H1.T, solve_chol(self.RC, H1))
-            self.beta = solve_chol(self.RHCH, np.dot(H1.T, solve_chol(self.RC, Y1)))
-            self.invCY = solve_chol(self.RC, Y1-np.dot(H1, self.beta))
-            mu = np.dot(Hi.T, self.beta) + np.dot(K2i.T, self.invCY)
+            beta = solve_chol(RHCH, np.dot(H1.T, solve_chol(RC, Y1)))
+            invCY = solve_chol(RC, Y1-np.dot(H1, beta))
+            mu = np.dot(Hi.T, beta) + np.dot(K2i.T, invCY)
         else:
-            self.invCY = solve_chol(self.RC, Y1)
-            mu = np.dot(K2i.T, self.invCY)
-            self.beta = np.array([])
+            invCY = solve_chol(RC, Y1)
+            mu = np.dot(K2i.T, invCY)
+            beta = np.array([])
 
-        Vf = np.linalg.solve(self.RC.T, K2i)
+        Vf = np.linalg.solve(RC.T, K2i)
         Covf = Kii - np.sum(np.multiply(Vf, Vf), 0).T
 
         if H:
-            Vb = np.linalg.solve(self.RHCH.T, Ri)
+            Vb = np.linalg.solve(RHCH.T, Ri)
             Covb = np.sum(np.multiply(Vb, Vb), 0).T
             var = Covb + Covf
         else:
@@ -153,6 +153,10 @@ class GP:
 
     def pseudo_likelihood(self, K, Y, H=np.array([])):
         n = K.shape[0]
-        nll_current = 0.
+        nll = 0.
 
-        self.nll = nll_current
+        for i in range(1, n+1):
+            mu, var = self.downdate(K, Y, i, H)
+            nll += .5*np.log(var) + (Y[i-1]-mu)**2/(2*var) + .5*np.log(2*np.pi)
+
+        self.nll = nll
