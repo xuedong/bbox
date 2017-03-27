@@ -2,6 +2,7 @@ import numpy as np
 import gpucb
 import basis
 import gp
+import utils_bo
 
 A = np.array([[1, 2, 3], [1, 2, 3]])
 B = np.array([[1, 2, 3], [1, 2, 3]])
@@ -16,10 +17,13 @@ scales = np.array([1, 2])
 #print(basis.kernel_se_norm(A, B))
 #print(basis.kernel_matern(A, B, 1, scales, 5))
 
-R = [[1, 2, 3], [0, 4, 5], [0, 0, 6]]
-Y = [7, 8, 9]
-R = np.array(R)
-Y = np.array(Y)
+#R = [[1, 2, 3], [0, 4, 5], [0, 0, 6]]
+R = np.array([[8, 1, 6], [3, 5, 7], [4, 9, 2]])
+#Y = [7, 8, 9]
+#R = np.array(R)
+#Y = np.array(Y)
+
+print(utils_bo.cummax(R))
 
 #print(gp.solve_chol(R, Y))
 #print(gp.approx_chol(np.array([[1, 2], [1, 0]])))
@@ -59,4 +63,4 @@ K22 = basis.kernel_se_norm(X2, X2)
 #print(var)
 
 gp1.pseudo_likelihood(K, Y)
-print(gp1.nll)
+#print(gp1.nll)
