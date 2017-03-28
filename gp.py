@@ -7,27 +7,8 @@ import numpy as np
 import basis
 import choldate
 
-def solve_chol(R, Y):
-    return np.linalg.solve(R, np.linalg.solve(R.T, Y))
-
-def approx_chol(X):
-    m = np.min(X)
-    m = max(np.finfo(float).eps, m*1e-14)
-    gap = m
-    I = np.eye(X.shape[0], X.shape[1])
-    ok = False
-
-    while not(ok):
-        try:
-            R = np.linalg.cholesky(X)
-            ok = True
-        except np.linalg.linalg.LinAlgError as e:
-            X = X + gap*I
-            if gap > 1e6*m:
-                print('Warning, adding '+str(gap)+' for cholpsd')
-            gap *= 10
-
-    return R.conj().T
+from utils_bo import solve_chol
+from utils_bo import approx_chol
 
 class GP:
     def __init__(self, noise):

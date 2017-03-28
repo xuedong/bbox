@@ -23,7 +23,7 @@ R = np.array([[8, 1, 6], [3, 5, 7], [4, 9, 2]])
 #R = np.array(R)
 #Y = np.array(Y)
 
-print(utils_bo.cummax(R))
+#print(utils_bo.cummax(R))
 
 #print(gp.solve_chol(R, Y))
 #print(gp.approx_chol(np.array([[1, 2], [1, 0]])))
@@ -64,3 +64,5 @@ K22 = basis.kernel_se_norm(X2, X2)
 
 gp1.pseudo_likelihood(K, Y)
 #print(gp1.nll)
+
+utils_bo.sample()
