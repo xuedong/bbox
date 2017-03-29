@@ -1,1 +1,1 @@
-# bboxBlack box optimization project for a Master Internship.
+Black box optimization project for a Master Internship.
