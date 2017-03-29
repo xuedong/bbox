@@ -8,7 +8,7 @@ import math
 import sys
 
 def gpucb(var_post, log_prob, nb_tests):
-    return math.sqrt(2.*(log_prob+math.log(nb_tests))*var_post)
+    return np.sqrt(2.*(log_prob+math.log(nb_tests))*var_post)
 
 
 

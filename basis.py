@@ -34,8 +34,11 @@ def sq_dist(A, B):
     return C
 
 def kernel_se(A, B, var, lengthscales):
-    ard = np.diag(1./lengthscales)
-    D = sq_dist(np.dot(ard, A), np.dot(ard, B))
+    if B is 'diag':
+        D = np.zeros((A.shape[0], 1))
+    else:
+        ard = np.diag(1./lengthscales)
+        D = sq_dist(np.dot(ard, A), np.dot(ard, B))
     K = var * np.exp(-D/2.)
 
     return K
@@ -48,8 +51,11 @@ def kernel_se_norm(A, B):
     return K
 
 def kernel_matern(A, B, var, lengthscales, nu):
-    ard = np.diag(1./lengthscales)
-    D = np.sqrt(sq_dist(np.sqrt(nu)*np.dot(ard, A), np.sqrt(nu)*np.dot(ard, B)))
+    if B is 'diag':
+        D = np.zeros((A.shape[0], 1))
+    else:
+        ard = np.diag(1./lengthscales)
+        D = np.sqrt(sq_dist(np.sqrt(nu)*np.dot(ard, A), np.sqrt(nu)*np.dot(ard, B)))
 
     if nu == 1:
         K = var * np.exp(-D)

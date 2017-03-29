@@ -20,6 +20,7 @@ import poo
 import utils_oo
 
 import basis
+import gp
 import utils_bo
 
 # System settings

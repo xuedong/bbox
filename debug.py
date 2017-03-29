@@ -1,5 +1,5 @@
 import numpy as np
-import gpucb
+import acquisition
 import basis
 import gp
 import utils_bo
@@ -33,6 +33,7 @@ H = [[4, 12, -16], [12, 37, -43], [-16, -43, 98]]
 X = np.array([[1, 2, 3], [1, 2, 3]])
 #print(X.shape)
 K = basis.kernel_se_norm(X, X)
+#K = basis.kernel_se(X, 'diag', 0.01, 0.5)
 #print(K)
 Y = np.array([3, 4, 5]).T
 #print(Y.shape)
@@ -65,4 +66,6 @@ K22 = basis.kernel_se_norm(X2, X2)
 gp1.pseudo_likelihood(K, Y)
 #print(gp1.nll)
 
-utils_bo.sample()
+f, Xs, Ys, Xt, Yt, Kss = utils_bo.sample(plot=False)
+
+utils_bo.bo(f, Xt, Yt, Xs, 100)

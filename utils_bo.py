@@ -5,9 +5,11 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 
 import basis
 import gp
+import acquisition
 
 def cummax(R):
     d = R.shape[0]
@@ -60,7 +62,9 @@ def sample(d=1, size=40, ns=1000, nt=10, kernel=basis.kernel_se_norm, basis=basi
     if B:
         Ys = Ys + np.dot(B, np.random.randn(B.shape[1], 1))
     Ys = Ys.T
+    #S = np.squeeze(np.asarray(Ys))
     S = np.reshape(Ys, (Ys.shape[0]*Ys.shape[1], 1))
+    #print(S.shape)
     f = lambda X: S[X] + noise*np.random.randn(X.shape[0], 1)
     Yt = f(np.arange(nt)).T
     #print(Yt)
@@ -77,7 +81,7 @@ def sample(d=1, size=40, ns=1000, nt=10, kernel=basis.kernel_se_norm, basis=basi
         Ktt = Kss[0:nt, 0:nt]
         Ht = basis(Xs)
         BI = gp.GP(noise)
-        BI.inference(Ktt, Yt.T)
+        BI.inference(Ktt, Yt.T, Ht)
 
         if verbose:
             print("Prediction...")
@@ -102,3 +106,37 @@ def sample(d=1, size=40, ns=1000, nt=10, kernel=basis.kernel_se_norm, basis=basi
             plt.show()
 
     return f, Xs, Ys, Xt, Yt, Kss
+
+def bo(f, Xt, Yt, Xs, iterations, algo='gpucb', noise=0.01, u=3, kernel=basis.kernel_se_norm, basis=basis.basis_none, plot=True, verbose=True):
+    target_plot = np.array([])
+    d, ns = Xs.shape
+    queries = np.array([])
+    Ht = basis(Xt)
+    Hs = basis(Xs)
+    Ktt = kernel(Xt, Xt)
+    Kts = kernel(Xt, Xs)
+    DKss = kernel(Xs, 'diag')
+
+    BI = gp.GP(noise)
+    BI.inference(Ktt, Yt.T, Ht)
+
+    for i in range(iterations):
+        BI.posterior(Kts, DKss, Ht, Hs)
+        u += math.log((i+1)**2*math.pi**2/6)
+
+        if algo is 'gpucb':
+            ucb = acquisition.gpucb(BI.var, u, ns)
+            target = BI.mu + ucb.T
+            ymax = np.max(target)
+            xmax = np.argmax(target)
+
+        np.append(queries, xmax)
+        xt = np.array([xmax])
+        yt = f(xt)
+        Xt = np.concatenate((Xt, Xs[:, xt[-1]][:, np.newaxis]), 1)
+        Yt = np.append(Yt, yt)
+
+        # GP update
+        Ht = np.concatenate((Ht, basis(Xt[-1, :])), 0) 
+
+    return queries, Yt
