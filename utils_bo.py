@@ -127,6 +127,9 @@ def bo(f, Xt, Yt, Xs, iterations, algo='gpucb', noise=0.01, u=3, kernel=basis.ke
         if algo is 'gpucb':
             ucb = acquisition.gpucb(BI.var, u, ns)
             target = BI.mu + ucb.T
+            print(BI.mu.shape)
+            print(ucb.shape)
+            print(target.shape)
             ymax = np.max(target)
             xmax = np.argmax(target)
 
@@ -137,6 +140,10 @@ def bo(f, Xt, Yt, Xs, iterations, algo='gpucb', noise=0.01, u=3, kernel=basis.ke
         Yt = np.append(Yt, yt)
 
         # GP update
-        Ht = np.concatenate((Ht, basis(Xt[-1, :])), 0) 
+        Ht = np.concatenate((Ht, basis(Xt[-1, :])), 0)
+        Ktt12 = kernel(Xt[:, 0:-1], Xt[:, -1][:, np.newaxis])
+        Ktt22 = kernel(Xt[:, -1][:, np.newaxis], Xt[:, -1][:, np.newaxis])
+        BI.inference_update(Ktt12, Ktt22, Yt)
+        Kts = np.concatenate((Kts, kernel(Xt[:, -1][:, np.newaxis], Xs)), 0)
 
     return queries, Yt
