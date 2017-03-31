@@ -127,9 +127,9 @@ def bo(f, Xt, Yt, Xs, iterations, algo='gpucb', noise=0.01, u=3, kernel=basis.ke
         if algo is 'gpucb':
             ucb = acquisition.gpucb(BI.var, u, ns)
             target = BI.mu + ucb.T
-            print(BI.mu.shape)
-            print(ucb.shape)
-            print(target.shape)
+            #print(BI.mu.shape)
+            #print(ucb.shape)
+            #print(target.shape)
             ymax = np.max(target)
             xmax = np.argmax(target)
 
@@ -145,5 +145,19 @@ def bo(f, Xt, Yt, Xs, iterations, algo='gpucb', noise=0.01, u=3, kernel=basis.ke
         Ktt22 = kernel(Xt[:, -1][:, np.newaxis], Xt[:, -1][:, np.newaxis])
         BI.inference_update(Ktt12, Ktt22, Yt)
         Kts = np.concatenate((Kts, kernel(Xt[:, -1][:, np.newaxis], Xs)), 0)
+
+        if plot:
+            fig, (ax) = plt.subplots(1, 1)
+            Z = np.sort(Xs[0, :])
+            IZ = np.argsort(Xs[0, :])
+            ax.plot(Z, BI.mu[IZ], '-r')
+
+            target_plot = np.min(BI.mu) + (target-np.min(target))*(np.max(BI.mu)-np.min(BI.mu))/(np.max(target)-min(target))
+            ax.plot(Z, target_plot[IZ], 'cyan')
+            ax.plot(Xt[0, :], Yt, 'D')
+            #plt.show()
+
+    if plot:
+        plt.show()
 
     return queries, Yt

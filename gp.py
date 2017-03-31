@@ -46,6 +46,7 @@ class GP:
             self.invCY = solve_chol(self.RC, Y-np.dot(H, self.beta))
         else:
             self.invCY = solve_chol(self.RC, Y)
+            self.invCY = self.invCY[:, np.newaxis]
             self.beta = np.array([])
             self.RHCH = np.array([])
 
