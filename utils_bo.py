@@ -120,6 +120,9 @@ def bo(f, Xt, Yt, Xs, iterations, algo='gpucb', noise=0.01, u=3, kernel=basis.ke
     BI = gp.GP(noise)
     BI.inference(Ktt, Yt.T, Ht)
 
+    if plot:
+        fig, (ax) = plt.subplots(1, 1)
+
     for i in range(iterations):
         BI.posterior(Kts, DKss, Ht, Hs)
         u += math.log((i+1)**2*math.pi**2/6)
@@ -147,14 +150,14 @@ def bo(f, Xt, Yt, Xs, iterations, algo='gpucb', noise=0.01, u=3, kernel=basis.ke
         Kts = np.concatenate((Kts, kernel(Xt[:, -1][:, np.newaxis], Xs)), 0)
 
         if plot:
-            fig, (ax) = plt.subplots(1, 1)
+            plt.close()
             Z = np.sort(Xs[0, :])
             IZ = np.argsort(Xs[0, :])
-            ax.plot(Z, BI.mu[IZ], '-r')
+            plt.plot(Z, BI.mu[IZ], '-r')
 
             target_plot = np.min(BI.mu) + (target-np.min(target))*(np.max(BI.mu)-np.min(BI.mu))/(np.max(target)-min(target))
-            ax.plot(Z, target_plot[IZ], 'cyan')
-            ax.plot(Xt[0, :], Yt, 'D')
+            plt.plot(Z, target_plot[IZ], 'cyan')
+            plt.plot(Xt[0, :], Yt, 'x')
             #plt.show()
 
     if plot:

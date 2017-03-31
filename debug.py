@@ -69,4 +69,4 @@ gp1.pseudo_likelihood(K, Y)
 
 f, Xs, Ys, Xt, Yt, Kss = utils_bo.sample(plot=False)
 
-utils_bo.bo(f, Xt, Yt, Xs, 100, plot=False)
+utils_bo.bo(f, Xt, Yt, Xs, 100)
