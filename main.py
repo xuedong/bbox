@@ -40,6 +40,7 @@ JOBS = 8
 NSPLITS = 2
 SAVE = True
 PATH = "data/"
+PLOT = False
 
 # Global Parameters
 alpha_ = math.log(HORIZON) * (SIGMA ** 2)
@@ -83,11 +84,15 @@ f3 = target.Himmelblau()
 bbox3 = utils_oo.std_box(f3.f, f3.fmax, NSPLITS, 2, (-6., 6.), SIGMA)
 #bbox3.plot2D()
 
+f4 = target.Rosenbrock(1, 100)
+bbox4 = utils_oo.std_box(f4.f, f4.fmax, NSPLITS, 2, (-3., 3.), SIGMA)
+#bbox4.plot2D()
+
 # Computing regrets
 pool = mp.ProcessingPool(JOBS)
 def partial_regret_hoo(rho):
     cum, sim, sel = utils_oo.regret_hoo(bbox2, rho, nu_, alpha_, SIGMA, HORIZON, UPDATE)
-    return sim
+    return cum
 #partial_regret_hoo = ft.partial(utils_oo.regret_cumulative_hoo, bbox=bbox1, nu=nu_, alpha=alpha_, SIGMA, HORIZON, UPDATE)
 
 data = [None for k in range(EPOCH)]
@@ -109,7 +114,7 @@ else:
         for j in range(len(rhos_hoo)):
             cums, sims, sels = utils.regret_hoo(bbox2, float(j)/float(len(rhos_hoo)), nu_, alpha_, SIGMA, HORIZON, UPDATE)
             for i in range(HORIZON):
-                current[j][i] += sims[i]
+                current[j][i] += cums[i]
             if VERBOSE:
                 print(str(1+j+k*len(rhos_hoo))+"/"+str(EPOCH*len(rhos_hoo)))
         data[k] = current
@@ -122,7 +127,7 @@ if VERBOSE:
     print("POO!")
 
 pcum, psim, psel = utils_oo.regret_poo(bbox2, rhos_poo, nu_, alpha_, HORIZON, EPOCH)
-data_poo = psim
+data_poo = pcum
 
 #print(dataPOO)
 print("--- %s seconds ---" % (time.time() - start_time))

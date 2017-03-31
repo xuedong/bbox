@@ -67,6 +67,18 @@ class Himmelblau:
     def fmax(self):
         return self.fmax
 
+class Rosenbrock:
+    def __init__(self, a, b):
+        self.fmax = 0.
+        self.a = a
+        self.b = b
+
+    def f(self, x):
+        return -(self.a-x[0])**2-self.b*(x[1]-x[0]**2)**2
+
+    def fmax(self):
+        return self.fmax
+
 """
 Function domain partitioning
 """
