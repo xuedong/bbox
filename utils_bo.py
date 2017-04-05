@@ -6,6 +6,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+import time
 
 import basis
 import gp
@@ -163,17 +164,16 @@ def bo(f, Xt, Yt, Xs, iterations, algo='gpucb', noise=0.01, u=3, kernel=basis.ke
             IZ = np.argsort(Xs[0, :])
             ax.plot(Z, BI.mu[IZ], '-r')
 
-            #target_plot = np.min(BI.mu) + (target-np.min(target))*(np.max(BI.mu)-np.min(BI.mu))/(np.max(target)-min(target))
-            #ax.plot(Z, target_plot[IZ], 'cyan')
+            target_plot = np.min(BI.mu) + (target-np.min(target))*(np.max(BI.mu)-np.min(BI.mu))/(np.max(target)-np.min(target))
+            ax.plot(Z, target_plot[IZ], 'k')
             ax.plot(Xt[0, :], Yt, 'x')
-            print(BI.mu[IZ].shape)
-            print(BI.var.shape)
-            #ax.fill_between(np.squeeze(np.asarray(Z[:, np.newaxis])),
-            #                np.squeeze(np.asarray(BI.mu[IZ]+2*BI.var[IZ][:, np.newaxis])),
-            #                np.squeeze(np.asarray(BI.mu[IZ]-2*BI.var[IZ][:, np.newaxis])),
-            #                facecolor='cyan')
+            ax.fill_between(np.squeeze(np.asarray(Z[:, np.newaxis])),
+                            np.squeeze(np.asarray(BI.mu[IZ]+2*BI.var.T[IZ])),
+                            np.squeeze(np.asarray(BI.mu[IZ]-2*BI.var.T[IZ])),
+                            facecolor='cyan')
 
             fig.canvas.draw()
+            time.sleep(2)
             show(block=False)
 
     if plot:
