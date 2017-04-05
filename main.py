@@ -47,18 +47,24 @@ alpha_ = math.log(HORIZON) * (SIGMA ** 2)
 rhos_hoo = [float(j)/float(RHOMAX-1) for j in range(RHOMAX)]
 nu_ = 1.
 
-#########################
-# Tests for HOO methods #
-#########################
-
 start_time = time.time()
 
 # First test
 f1 = target.DoubleSine(0.3, 0.8, 0.5)
 bbox1 = utils_oo.std_box(f1.f, f1.fmax, NSPLITS, 1, (0., 1.), SIGMA)
+#bbox1.plot1D((0., 1.))
 
 f2 = target.DiffFunc(0.5)
 bbox2 = utils_oo.std_box(f2.f, f2.fmax, NSPLITS, 1, (0., 1.), SIGMA)
+#bbox2.plot1D((0., 1.))
+
+f5 = target.Sine()
+bbox5 = utils_oo.std_box(f5.f, f5.fmax, NSPLITS, 1, (0., np.pi), SIGMA)
+#bbox5.plot1D((0., np.pi))
+
+f6 = target.Gramacy1()
+bbox6 = utils_oo.std_box(f6.f, f6.fmax, NSPLITS, 1, (0.5, 2.5), SIGMA)
+#bbox6.plot1D((0.5, 2.5))
 
 # Simple regret evolutiion with respect to different rhos
 #regrets = np.zeros(RHOMAX)
@@ -88,6 +94,11 @@ f4 = target.Rosenbrock(1, 100)
 bbox4 = utils_oo.std_box(f4.f, f4.fmax, NSPLITS, 2, (-3., 3.), SIGMA)
 #bbox4.plot2D()
 
+#########################
+# Tests for HOO methods #
+#########################
+
+"""
 # Computing regrets
 pool = mp.ProcessingPool(JOBS)
 def partial_regret_hoo(rho):
@@ -142,8 +153,12 @@ if SAVE and VERBOSE:
         pickle.dump(data_poo, file)
 
 #bbox1.plot1D()
-utils_oo.show(PATH, EPOCH, HORIZON, rhos_hoo, rhos_poo, DELTA)
-
+#utils_oo.show(PATH, EPOCH, HORIZON, rhos_hoo, rhos_poo, DELTA)
+"""
 ########################
 # Tests for BO methods #
 ########################
+
+f, Xs, Ys, Xt, Yt, Kss = utils_bo.sample(plot=True, bbox=bbox5)
+
+utils_bo.bo(f, Xt, Yt, Xs, 100)

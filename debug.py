@@ -67,6 +67,7 @@ K22 = basis.kernel_se_norm(X2, X2)
 gp1.pseudo_likelihood(K, Y)
 #print(gp1.nll)
 
-f, Xs, Ys, Xt, Yt, Kss = utils_bo.sample(plot=False)
+#f, Xs, Ys, Xt, Yt, Kss = utils_bo.sample(plot=True)
 
-utils_bo.bo(f, Xt, Yt, Xs, 100)
+#utils_bo.bo(f, Xt, Yt, Xs, 200)
+#utils_bo.bo(f, Xt, Yt, Xs, 1000)

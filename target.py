@@ -14,6 +14,17 @@ from mpl_toolkits.mplot3d import Axes3D
 """
 Target functions
 """
+
+class Sine:
+    def __init__(self):
+        self.fmax = 0.
+
+    def f(self, x):
+        return math.sin(x[0]) - 1.
+
+    def fmax(self):
+        return self.fmax
+
 class DoubleSine:
     def __init__(self, rho1, rho2, tmax):
         self.ep1 = -math.log(rho1, 2)
@@ -79,16 +90,36 @@ class Rosenbrock:
     def fmax(self):
         return self.fmax
 
+class Gramacy1:
+    def __init__(self):
+        self.xmax = 0.54856343
+        self.fmax = self.f([self.xmax])
+
+    def f(self, x):
+        return -np.sin(10*np.pi*x[0])/(2*x[0])-(x[0]-1)**4
+
+    def fmax(self):
+        return self.fmax
+
 """
 Function domain partitioning
 """
 def std_center(support):
+    """
+    Pick the center of a subregion.
+    """
     return [(support[i][0]+support[i][1])/2. for i in range(len(support))]
 
 def std_rand(support):
+    """
+    Randomly pick a point in a subregion.
+    """
     return [(support[i][0]+(support[i][1]-support[i][0])*random.random()) for i in range(len(support))]
 
 def std_split(support, nsplits):
+    """
+    Split a box uniformly.
+    """
     lens = np.array([support[i][1]-support[i][0] for i in range(len(support))])
     max_index = np.argmax(lens)
     max_length = np.max(lens)
@@ -116,6 +147,9 @@ class Box:
         self.side = side
 
     def std_partition(self):
+        """
+        Standard partitioning of a black box.
+        """
         self.center = std_center
         self.rand = std_rand
         self.split = std_split
@@ -124,15 +158,19 @@ class Box:
             self.support.append(self.side)
 
     def std_noise(self, sigma):
+        """
+        Stochastic target with Gaussian or uniform noise.
+        """
         self.f_noised = lambda x: self.f_mean(x) + sigma*np.random.normal(0, sigma)
         #self.f_noised = lambda x: self.f_mean(x) + sigma*random.random()
 
-    def plot1D(self):
+    def plot1D(self, side):
         """
         Plot for 1D function.
         """
-        x = np.array([(i+1)/10000. for i in range(9999)])
-        y = np.array([self.f_mean([(i+1)/10000.]) for i in range(9999)])
+        a, b = side
+        x = np.array([(a+i)*10000/((b-a)*10000.) for i in range(int((b-a)*10000)-1)])
+        y = np.array([self.f_mean([x[i]]) for i in range(int((b-a)*10000)-1)])
         pl.plot(x, y)
         pl.show()
 

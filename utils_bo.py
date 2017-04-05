@@ -11,6 +11,8 @@ import basis
 import gp
 import acquisition
 
+from ezplot import figure, show
+
 def cummax(R):
     d = R.shape[0]
     n = R.shape[1]
@@ -49,7 +51,7 @@ def approx_chol(X):
 
     return R.conj().T
 
-def sample(d=1, size=40, ns=1000, nt=10, kernel=basis.kernel_se_norm, basis=basis.basis_none, noise=0.01, posterior=True, verbose=True, plot=True):
+def sample(d=1, size=40, ns=1000, nt=10, kernel=basis.kernel_se_norm, basis=basis.basis_none, noise=0.01, posterior=True, verbose=True, plot=True, bbox=None):
     Xs = size*np.random.rand(d, ns)
     #print(Xs)
     Xt = Xs[0:d, 0:nt]
@@ -65,8 +67,12 @@ def sample(d=1, size=40, ns=1000, nt=10, kernel=basis.kernel_se_norm, basis=basi
     #S = np.squeeze(np.asarray(Ys))
     S = np.reshape(Ys, (Ys.shape[0]*Ys.shape[1], 1))
     #print(S.shape)
-    f = lambda X: S[X] + noise*np.random.randn(X.shape[0], 1)
-    Yt = f(np.arange(nt)).T
+    if bbox:
+        f = bbox.f_noised
+        Yt = np.array([[f([i])] for i in np.arange(nt)]).T
+    else:
+        f = lambda X: S[X] + noise*np.random.randn(X.shape[0], 1)
+        Yt = f(np.arange(nt)).T
     #print(Yt)
 
     if posterior:
@@ -96,7 +102,7 @@ def sample(d=1, size=40, ns=1000, nt=10, kernel=basis.kernel_se_norm, basis=basi
             IZ = np.argsort(Xs[0, :])
             ax.plot(Z, BI.mu[IZ], '-r')
             #print(BI.mu[IZ].T)
-            #print(BI.var[IZ].shape)
+            #print(BI.var.shape)
             #print(Z[:, np.newaxis].T)
             ax.fill_between(np.squeeze(np.asarray(Z[:, np.newaxis])),
                             np.squeeze(np.asarray(BI.mu[IZ]+2*BI.var[IZ][:, np.newaxis])),
@@ -121,7 +127,7 @@ def bo(f, Xt, Yt, Xs, iterations, algo='gpucb', noise=0.01, u=3, kernel=basis.ke
     BI.inference(Ktt, Yt.T, Ht)
 
     if plot:
-        fig, (ax) = plt.subplots(1, 1)
+        fig = figure(figsize=(10, 6))
 
     for i in range(iterations):
         BI.posterior(Kts, DKss, Ht, Hs)
@@ -150,15 +156,25 @@ def bo(f, Xt, Yt, Xs, iterations, algo='gpucb', noise=0.01, u=3, kernel=basis.ke
         Kts = np.concatenate((Kts, kernel(Xt[:, -1][:, np.newaxis], Xs)), 0)
 
         if plot:
-            plt.close()
+            fig.clear()
+            ax = fig.add_subplotspec((2, 2), (0, 0))
+
             Z = np.sort(Xs[0, :])
             IZ = np.argsort(Xs[0, :])
-            plt.plot(Z, BI.mu[IZ], '-r')
+            ax.plot(Z, BI.mu[IZ], '-r')
 
-            target_plot = np.min(BI.mu) + (target-np.min(target))*(np.max(BI.mu)-np.min(BI.mu))/(np.max(target)-min(target))
-            plt.plot(Z, target_plot[IZ], 'cyan')
-            plt.plot(Xt[0, :], Yt, 'x')
-            #plt.show()
+            #target_plot = np.min(BI.mu) + (target-np.min(target))*(np.max(BI.mu)-np.min(BI.mu))/(np.max(target)-min(target))
+            #ax.plot(Z, target_plot[IZ], 'cyan')
+            ax.plot(Xt[0, :], Yt, 'x')
+            print(BI.mu[IZ].shape)
+            print(BI.var.shape)
+            #ax.fill_between(np.squeeze(np.asarray(Z[:, np.newaxis])),
+            #                np.squeeze(np.asarray(BI.mu[IZ]+2*BI.var[IZ][:, np.newaxis])),
+            #                np.squeeze(np.asarray(BI.mu[IZ]-2*BI.var[IZ][:, np.newaxis])),
+            #                facecolor='cyan')
+
+            fig.canvas.draw()
+            show(block=False)
 
     if plot:
         plt.show()
