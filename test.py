@@ -159,6 +159,6 @@ if SAVE and VERBOSE:
 # Tests for BO methods #
 ########################
 
-f, Xs, Ys, Xt, Yt, Kss = utils_bo.sample(side=(0, 40), plot=True, bbox=None)
+#f, Xs, Ys, Xt, Yt, Kss = utils_bo.sample(side=(0, 40), plot=True, bbox=None)
 
-utils_bo.bo(f, Xt, Yt, Xs, 100, bbox=False)
+#utils_bo.bo(f, Xt, Yt, Xs, 100, bbox=False)
