@@ -52,19 +52,19 @@ start_time = time.time()
 # First test
 f1 = target.DoubleSine(0.3, 0.8, 0.5)
 bbox1 = utils_oo.std_box(f1.f, f1.fmax, NSPLITS, 1, (0., 1.), SIGMA)
-#bbox1.plot1D((0., 1.))
+#bbox1.plot1D()
 
 f2 = target.DiffFunc(0.5)
 bbox2 = utils_oo.std_box(f2.f, f2.fmax, NSPLITS, 1, (0., 1.), SIGMA)
-#bbox2.plot1D((0., 1.))
+#bbox2.plot1D()
 
 f5 = target.Sine()
 bbox5 = utils_oo.std_box(f5.f, f5.fmax, NSPLITS, 1, (0., np.pi), SIGMA)
-#bbox5.plot1D((0., np.pi))
+#bbox5.plot1D()
 
 f6 = target.Gramacy1()
 bbox6 = utils_oo.std_box(f6.f, f6.fmax, NSPLITS, 1, (0.5, 2.5), SIGMA)
-#bbox6.plot1D((0.5, 2.5))
+bbox6.plot1D()
 
 # Simple regret evolutiion with respect to different rhos
 #regrets = np.zeros(RHOMAX)
@@ -159,6 +159,6 @@ if SAVE and VERBOSE:
 # Tests for BO methods #
 ########################
 
-f, Xs, Ys, Xt, Yt, Kss = utils_bo.sample(plot=True, bbox=None)
+f, Xs, Ys, Xt, Yt, Kss = utils_bo.sample(side=(0, 40), plot=True, bbox=None)
 
-utils_bo.bo(f, Xt, Yt, Xs, 20)
+utils_bo.bo(f, Xt, Yt, Xs, 100, bbox=False)

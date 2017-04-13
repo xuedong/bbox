@@ -9,6 +9,7 @@ import random
 #import operator as op
 import pylab as pl
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 """
@@ -164,15 +165,17 @@ class Box:
         self.f_noised = lambda x: self.f_mean(x) + sigma*np.random.normal(0, sigma)
         #self.f_noised = lambda x: self.f_mean(x) + sigma*random.random()
 
-    def plot1D(self, side):
+    def plot1D(self):
         """
         Plot for 1D function.
         """
-        a, b = side
-        x = np.array([(a+i)*10000/((b-a)*10000.) for i in range(int((b-a)*10000)-1)])
-        y = np.array([self.f_mean([x[i]]) for i in range(int((b-a)*10000)-1)])
-        pl.plot(x, y)
-        pl.show()
+        a, b = self.side
+        fig, ax = plt.subplots()
+        ax.set_xlim(a, b)
+        x = np.array([a+i/10000. for i in range(int((b-a)*10000))])
+        y = np.array([self.f_mean([x[i]]) for i in range(int((b-a)*10000))])
+        plt.plot(x, y)
+        plt.show()
 
     def plot2D(self):
         """

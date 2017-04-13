@@ -52,11 +52,13 @@ def approx_chol(X):
 
     return R.conj().T
 
-def sample(d=1, size=40, ns=1000, nt=10, kernel=basis.kernel_se_norm, basis=basis.basis_none, noise=0.01, posterior=True, verbose=True, plot=True, bbox=None):
-    Xs = size*np.random.rand(d, ns)
+def sample(d=1, side=(0, 40), ns=1000, nt=10, kernel=basis.kernel_se_norm, basis=basis.basis_none, noise=0.01, posterior=True, verbose=True, plot=True, bbox=None):
+    a, b = side
+    size = b-a
+    Xs = a + size*np.random.rand(d, ns)
     #print(Xs)
     Xt = Xs[0:d, 0:nt]
-    #print(Xt)
+    print(Xt[0][4])
     Kss = kernel(Xs, Xs)
     #print(K)
     B = basis(Xs)
@@ -70,7 +72,7 @@ def sample(d=1, size=40, ns=1000, nt=10, kernel=basis.kernel_se_norm, basis=basi
     #print(S.shape)
     if bbox:
         f = bbox.f_noised
-        Yt = np.array([[f([i])] for i in np.arange(nt)]).T
+        Yt = np.array([[f([Xt[0][i]])] for i in np.arange(nt)]).T
     else:
         f = lambda X: S[X] + noise*np.random.randn(X.shape[0], 1)
         Yt = f(np.arange(nt)).T
@@ -114,7 +116,7 @@ def sample(d=1, size=40, ns=1000, nt=10, kernel=basis.kernel_se_norm, basis=basi
 
     return f, Xs, Ys, Xt, Yt, Kss
 
-def bo(f, Xt, Yt, Xs, iterations, algo='gpucb', noise=0.01, u=3, kernel=basis.kernel_se_norm, basis=basis.basis_none, plot=True, verbose=True):
+def bo(f, Xt, Yt, Xs, iterations, algo='gpucb', noise=0.01, u=3, kernel=basis.kernel_se_norm, basis=basis.basis_none, plot=True, verbose=True, bbox=True):
     target_plot = np.array([])
     d, ns = Xs.shape
     queries = np.array([])
@@ -141,11 +143,15 @@ def bo(f, Xt, Yt, Xs, iterations, algo='gpucb', noise=0.01, u=3, kernel=basis.ke
             #print(ucb.shape)
             #print(target.shape)
             ymax = np.max(target)
+            #print(ymax)
             xmax = np.argmax(target)
 
         np.append(queries, xmax)
         xt = np.array([xmax])
-        yt = f(xt)
+        if bbox:
+            yt = f([Xs[0][xmax]])
+        else:
+            yt = f(xt)
         Xt = np.concatenate((Xt, Xs[:, xt[-1]][:, np.newaxis]), 1)
         Yt = np.append(Yt, yt)
 
@@ -158,23 +164,27 @@ def bo(f, Xt, Yt, Xs, iterations, algo='gpucb', noise=0.01, u=3, kernel=basis.ke
 
         if plot:
             fig.clear()
-            ax = fig.add_subplotspec((2, 2), (0, 0))
+            ax1 = fig.add_subplotspec((2, 2), (0, 0), hidex=True)
+            ax2 = fig.add_subplotspec((2, 2), (1, 0), hidey=True, sharex=ax1)
 
             Z = np.sort(Xs[0, :])
             IZ = np.argsort(Xs[0, :])
-            ax.plot(Z, BI.mu[IZ], '-r')
+            ax1.plot(Z, BI.mu[IZ], '-r')
 
             target_plot = np.min(BI.mu) + (target-np.min(target))*(np.max(BI.mu)-np.min(BI.mu))/(np.max(target)-np.min(target))
-            ax.plot(Z, target_plot[IZ], 'k')
-            ax.plot(Xt[0, :], Yt, 'x')
-            ax.fill_between(np.squeeze(np.asarray(Z[:, np.newaxis])),
+            #ax1.plot(Z, target_plot[IZ], 'k')
+            ax1.plot(Xt[0, :], Yt, 'x')
+            ax1.fill_between(np.squeeze(np.asarray(Z[:, np.newaxis])),
                             np.squeeze(np.asarray(BI.mu[IZ]+2*BI.var.T[IZ])),
                             np.squeeze(np.asarray(BI.mu[IZ]-2*BI.var.T[IZ])),
                             facecolor='cyan')
 
             fig.canvas.draw()
-            time.sleep(2)
+            time.sleep(1)
             show(block=False)
+
+        if verbose:
+            print(str(i+1) + '. max: ' + str(np.max(Yt)) + ', target: ' + str(ymax) + ', observed: ' + str(yt))
 
     if plot:
         plt.show()
