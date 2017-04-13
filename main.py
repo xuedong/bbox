@@ -33,16 +33,17 @@ from pybo import recommenders
 from pybo import solve_bayesopt
 
 NSPLITS = 2
-SIDE = (0.5, 2.5)
+SIDE = (0, 2*np.pi)
 DIM = 1
 SIGMA = 0.01
-HORIZON = 10
+HORIZON = 30
 
 VERBOSE = True
 PLOT = True
 SAVE = True
 
-target = target.Gramacy1()
+#target = target.Gramacy1()
+target = target.Sine2()
 bbox = utils_oo.std_box(target.f, target.fmax, NSPLITS, DIM, SIDE, SIGMA)
 
 def f(x):
@@ -58,7 +59,7 @@ def main():
     bounds = [a, b]
     x = np.linspace(bounds[0], bounds[1], 500)
 
-    xbest, model, info = solve_bayesopt(f, bounds, solver='lbfgs', niter=30, verbose=VERBOSE)
+    xbest, model, info = solve_bayesopt(f, bounds, solver='lbfgs', niter=HORIZON, verbose=VERBOSE)
 
     mu, s2 = model.predict(x[:, None])
 

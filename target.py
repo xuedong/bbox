@@ -16,12 +16,23 @@ from mpl_toolkits.mplot3d import Axes3D
 Target functions
 """
 
-class Sine:
+class Sine1:
     def __init__(self):
         self.fmax = 0.
 
     def f(self, x):
         return math.sin(x[0]) - 1.
+
+    def fmax(self):
+        return self.fmax
+
+class Sine2:
+    def __init__(self):
+        self.xmax = 3.614
+        self.fmax = self.f([self.xmax])
+
+    def f(self, x):
+        return -np.cos(x[0])-np.sin(3*x[0])
 
     def fmax(self):
         return self.fmax

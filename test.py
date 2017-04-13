@@ -58,7 +58,7 @@ f2 = target.DiffFunc(0.5)
 bbox2 = utils_oo.std_box(f2.f, f2.fmax, NSPLITS, 1, (0., 1.), SIGMA)
 #bbox2.plot1D()
 
-f5 = target.Sine()
+f5 = target.Sine1()
 bbox5 = utils_oo.std_box(f5.f, f5.fmax, NSPLITS, 1, (0., np.pi), SIGMA)
 #bbox5.plot1D()
 
