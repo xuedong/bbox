@@ -47,12 +47,28 @@ bbox = utils_oo.std_box(target.f, target.fmax, NSPLITS, DIM, SIDE, SIGMA)
 
 def f(x):
     x = np.array([x])
-    return target.f(x)
+    return target.f(x)[0]
 
 def main():
+    #a, b = SIDE
+    #bounds = np.array([[a, b]])
+    #utils_bo.animated(target, bounds, PLOT, VERBOSE, HORIZON)
+
     a, b = SIDE
-    bounds = np.array([[a, b]])
-    utils_bo.animated(target, bounds, PLOT, VERBOSE, HORIZON)
+    bounds = [a, b]
+    x = np.linspace(bounds[0], bounds[1], 500)
+
+    xbest, model, info = solve_bayesopt(f, bounds, solver='lbfgs', niter=30, verbose=VERBOSE)
+
+    mu, s2 = model.predict(x[:, None])
+
+    if PLOT:
+        ax = figure().gca()
+        ax.plot_banded(x, mu, 2*np.sqrt(s2))
+        ax.axvline(xbest)
+        ax.scatter(info.x.ravel(), info.y)
+        ax.figure.canvas.draw()
+        show()
 
 if __name__ == '__main__':
     main()
