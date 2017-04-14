@@ -28,7 +28,7 @@ sys.setrecursionlimit(10000)
 #random.seed(42)
 
 # Macros
-HORIZON = 500
+HORIZON = 100
 RHOMAX = 20
 SIGMA = 0.1
 DELTA = 0.05
@@ -98,11 +98,10 @@ bbox4 = utils_oo.std_box(f4.f, f4.fmax, NSPLITS, 2, (-3., 3.), SIGMA)
 # Tests for HOO methods #
 #########################
 
-"""
 # Computing regrets
 pool = mp.ProcessingPool(JOBS)
 def partial_regret_hoo(rho):
-    cum, sim, sel = utils_oo.regret_hoo(bbox2, rho, nu_, alpha_, SIGMA, HORIZON, UPDATE)
+    cum, sim, sel = utils_oo.regret_hoo(bbox6, rho, nu_, alpha_, SIGMA, HORIZON, UPDATE)
     return cum
 #partial_regret_hoo = ft.partial(utils_oo.regret_cumulative_hoo, bbox=bbox1, nu=nu_, alpha=alpha_, SIGMA, HORIZON, UPDATE)
 
@@ -123,7 +122,7 @@ if PARALLEL:
 else:
     for k in range(EPOCH):
         for j in range(len(rhos_hoo)):
-            cums, sims, sels = utils.regret_hoo(bbox2, float(j)/float(len(rhos_hoo)), nu_, alpha_, SIGMA, HORIZON, UPDATE)
+            cums, sims, sels = utils.regret_hoo(bbox6, float(j)/float(len(rhos_hoo)), nu_, alpha_, SIGMA, HORIZON, UPDATE)
             for i in range(HORIZON):
                 current[j][i] += cums[i]
             if VERBOSE:
@@ -137,7 +136,7 @@ else:
 if VERBOSE:
     print("POO!")
 
-pcum, psim, psel = utils_oo.regret_poo(bbox2, rhos_poo, nu_, alpha_, HORIZON, EPOCH)
+pcum, psim, psel = utils_oo.regret_poo(bbox6, rhos_poo, nu_, alpha_, HORIZON, EPOCH)
 data_poo = pcum
 
 #print(dataPOO)
@@ -152,9 +151,8 @@ if SAVE and VERBOSE:
     with open("data/POO", 'wb') as file:
         pickle.dump(data_poo, file)
 
-#bbox1.plot1D()
-#utils_oo.show(PATH, EPOCH, HORIZON, rhos_hoo, rhos_poo, DELTA)
-"""
+utils_oo.show(PATH, EPOCH, HORIZON, rhos_hoo, rhos_poo, DELTA)
+
 ########################
 # Tests for BO methods #
 ########################

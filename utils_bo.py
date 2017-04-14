@@ -20,6 +20,15 @@ from pybo import policies
 from pybo import solvers
 from pybo import recommenders
 
+def regret_bo(bbox, infos, horizon, epoch):
+    y_cum = [[0. for j in range(horizon)] for i in range(epoch)]
+    for i in range(epoch):
+        cum = 0.
+        for j in range(horizon):
+            cum += bbox.fmax - infos[i].y[j]
+            y_cum[i][j] = cum/(j+1)
+
+    return y_cum
 
 def cummax(R):
     d = R.shape[0]
