@@ -80,8 +80,12 @@ def show(path, epoch, horizon, rhos_hoo, rhos_poo, delta):
             data[k] = pickle.load(file)
     with open(path+"POO", 'rb') as file:
         data_poo = pickle.load(file)
-    with open(path+"GPUCB", 'rb') as file:
-        data_ucb = pickle.load(file)
+    with open(path+"GPUCB_DIRECT", 'rb') as file:
+        data_ucb_direct = pickle.load(file)
+    with open(path+"GPUCB_LBFGS", 'rb') as file:
+        data_ucb_lbfgs = pickle.load(file)
+    with open(path+"EI", 'rb') as file:
+        data_ei = pickle.load(file)
 
     length_hoo = len(rhos_hoo)
     length_poo = len(rhos_poo)
@@ -96,7 +100,11 @@ def show(path, epoch, horizon, rhos_hoo, rhos_poo, delta):
 
     means_poo = [sum([data_poo[u][v]/float(epoch) for u in range(epoch)]) for v in range(horizon)]
 
-    means_ucb = [sum([data_ucb[u][v]/float(epoch) for u in range(epoch)]) for v in range(horizon)]
+    means_ucb_direct = [sum([data_ucb_direct[u][v]/float(epoch) for u in range(epoch)]) for v in range(horizon)]
+
+    means_ucb_lbfgs = [sum([data_ucb_lbfgs[u][v]/float(epoch) for u in range(epoch)]) for v in range(horizon)]
+
+    means_ei = [sum([data_ei[u][v]/float(epoch) for u in range(epoch)]) for v in range(horizon)]
 
     X = np.array(range(horizon))
     for i in range(len(rhostoshow)):
@@ -104,7 +112,9 @@ def show(path, epoch, horizon, rhos_hoo, rhos_poo, delta):
         label__ = r"$\mathtt{HOO}, \rho = " + str(float(k)/float(length_hoo)) + "$"
         pl.plot(X, np.array(means[k]), label=label__, dashes=style[i])
     pl.plot(X, np.array(means_poo), label=r"$\mathtt{POO}$")
-    pl.plot(X, np.array(means_ucb), label=r"$\mathtt{GPUCB}$", color='blue')
+    pl.plot(X, np.array(means_ucb_direct), label=r"$\mathtt{GPUCB-DIRECT}$", color='blue')
+    pl.plot(X, np.array(means_ucb_lbfgs), label=r"$\mathtt{GPUCB-LBFGS}$", color='green')
+    pl.plot(X, np.array(means_ei), label=r"$\mathtt{EI}$", color='black')
     pl.legend()
     pl.xlabel("numbe of evaluations")
     pl.ylabel("simple regret")
@@ -116,7 +126,9 @@ def show(path, epoch, horizon, rhos_hoo, rhos_poo, delta):
         label__ = r"$\mathtt{HOO}, \rho = " + str(float(k)/float(length_hoo)) + "$"
         pl.plot(X, np.array(map(math.log, means[k][1:])), label=label__, dashes=style[i])
     pl.plot(X, np.array(map(math.log, means_poo[1:])), label=r"$\mathtt{POO}$")
-    pl.plot(X, np.array(map(math.log, means_ucb[1:])), label=r"$\mathtt{GPUCB}$", color='blue')
+    pl.plot(X, np.array(map(math.log, means_ucb_direct[1:])), label=r"$\mathtt{GPUCB-DIRECT}$", color='blue')
+    pl.plot(X, np.array(map(math.log, means_ucb_lbfgs[1:])), label=r"$\mathtt{GPUCB-LBFGS}$", color='green')
+    pl.plot(X, np.array(map(math.log, means_ei[1:])), label=r"$\mathtt{EI}$", color='black')
     pl.legend(loc=3)
     pl.xlabel("number of evaluations (log-scale)")
     pl.ylabel("simple regret")

@@ -32,16 +32,16 @@ from pybo import solvers
 from pybo import recommenders
 from pybo import solve_bayesopt
 
-NSPLITS = 2
+NSPLITS = 3
 RHOMAX = 20
 DELTA = 0.05
 JOBS = 8
 
-SIDE = (0.5, 2.5)
+SIDE = (.5, 2.5)
 DIM = 1
 SIGMA = 0.01
-HORIZON = 100
-EPOCH = 10
+HORIZON = 5
+EPOCH = 1
 
 VERBOSE = True
 PLOT = True
@@ -56,12 +56,18 @@ nu_ = 1.
 
 target = target.Gramacy1()
 #target = target.Sine2()
+#target = target.Himmelblau()
 bbox = utils_oo.std_box(target.f, target.fmax, NSPLITS, DIM, SIDE, SIGMA)
 
 #pool = mp.ProcessingPool(JOBS)
 
 def f(x):
     x = np.array([x])
+    return target.f(x)[0]
+
+def f2(x):
+    a, b = x
+    x = np.array([a, b])
     return target.f(x)[0]
 
 def main():
@@ -77,20 +83,41 @@ def main():
     if VERBOSE:
         print('GPUCB!')
 
-    infos = [None for k in range(EPOCH)]
+    infos_direct = [None for k in range(EPOCH)]
     for k in range(EPOCH):
-        xbest, model, info = solve_bayesopt(f, bounds, policy='ucb', solver='lbfgs', niter=HORIZON, verbose=False)
+        xbest, model, info = solve_bayesopt(f, bounds, policy='ucb', solver='direct', niter=HORIZON, verbose=False)
 
         mu, s2 = model.predict(x[:, None])
-        infos[k] = info
+        infos_direct[k] = info
 
         #regrets_current = np.array(utils_bo.regret_bo(bbox, info, HORIZON))
         #regrets = np.add(regrets, regrets_current)
 
         print(k+1)
 
-    #data_ucb = [None for k in range(EPOCH)]
-    data_ucb = utils_bo.regret_bo(bbox, infos, HORIZON, EPOCH)
+    data_ucb_direct = utils_bo.regret_bo(bbox, infos_direct, HORIZON, EPOCH)
+
+    infos_lbfgs = [None for k in range(EPOCH)]
+    for k in range(EPOCH):
+        xbest, model, info = solve_bayesopt(f, bounds, policy='ucb', niter=HORIZON, verbose=False)
+
+        mu, s2 = model.predict(x[:, None])
+        infos_lbfgs[k] = info
+
+        print(k+1)
+
+    data_ucb_lbfgs = utils_bo.regret_bo(bbox, infos_lbfgs, HORIZON, EPOCH)
+
+    infos_ei = [None for k in range(EPOCH)]
+    for k in range(EPOCH):
+        xbest, model, info = solve_bayesopt(f, bounds, policy='ei', solver='direct', niter=HORIZON, verbose=False)
+
+        mu, s2 = model.predict(x[:, None])
+        infos_ei[k] = info
+
+        print(k+1)
+
+    data_ei = utils_bo.regret_bo(bbox, infos_ei, HORIZON, EPOCH)
 
     # Computing regrets
     pool = mp.ProcessingPool(JOBS)
@@ -142,24 +169,25 @@ def main():
             print(str(k+1)+"/"+str(EPOCH))
         with open("data/POO", 'wb') as file:
             pickle.dump(data_poo, file)
-        with open("data/GPUCB", 'wb') as file:
-            pickle.dump(data_ucb, file)
+        with open("data/GPUCB_DIRECT", 'wb') as file:
+            pickle.dump(data_ucb_direct, file)
+        with open("data/GPUCB_LBFGS", 'wb') as file:
+            pickle.dump(data_ucb_lbfgs, file)
+        with open("data/EI", 'wb') as file:
+            pickle.dump(data_ei, file)
 
     if PLOT:
         utils_oo.show(PATH, EPOCH, HORIZON, rhos_hoo, rhos_poo, DELTA)
 
-    #if PLOT:
-    #    X = range(HORIZON)
-    #    pl.plot(X, regrets/float(EPOCH))
-    #    pl.show()
+    if PLOT:
+        ax = figure().gca()
+        ax.plot_banded(x, mu, 2*np.sqrt(s2))
+        ax.axvline(xbest)
+        ax.scatter(info.x.ravel(), info.y)
+        ax.figure.canvas.draw()
 
-    #if PLOT:
-    #    ax = figure().gca()
-    #    ax.plot_banded(x, mu, 2*np.sqrt(s2))
-    #    ax.axvline(xbest)
-    #    ax.scatter(info.x.ravel(), info.y)
-    #    ax.figure.canvas.draw()
-    #    show()
+    show()
+    #bbox.plot1D()
 
 if __name__ == '__main__':
     main()

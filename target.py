@@ -21,7 +21,7 @@ class Sine1:
         self.fmax = 0.
 
     def f(self, x):
-        return math.sin(x[0]) - 1.
+        return np.sin(x[0]) - 1.
 
     def fmax(self):
         return self.fmax
