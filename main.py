@@ -40,8 +40,8 @@ JOBS = 8
 SIDE = (.5, 2.5)
 DIM = 1
 SIGMA = 0.01
-HORIZON = 5
-EPOCH = 1
+HORIZON = 50
+EPOCH = 10
 
 VERBOSE = True
 PLOT = True
@@ -108,16 +108,27 @@ def main():
 
     data_ucb_lbfgs = utils_bo.regret_bo(bbox, infos_lbfgs, HORIZON, EPOCH)
 
-    infos_ei = [None for k in range(EPOCH)]
+    #infos_ei = [None for k in range(EPOCH)]
+    #for k in range(EPOCH):
+    #    xbest, model, info = solve_bayesopt(f, bounds, policy='ei', solver='direct', niter=HORIZON, verbose=False)
+
+    #    mu, s2 = model.predict(x[:, None])
+    #    infos_ei[k] = info
+
+    #    print(k+1)
+
+    #data_ei = utils_bo.regret_bo(bbox, infos_ei, HORIZON, EPOCH)
+
+    infos_pi = [None for k in range(EPOCH)]
     for k in range(EPOCH):
-        xbest, model, info = solve_bayesopt(f, bounds, policy='ei', solver='direct', niter=HORIZON, verbose=False)
+        xbest, model, info = solve_bayesopt(f, bounds, policy='pi', solver='direct', niter=HORIZON, verbose=False)
 
         mu, s2 = model.predict(x[:, None])
-        infos_ei[k] = info
+        infos_pi[k] = info
 
         print(k+1)
 
-    data_ei = utils_bo.regret_bo(bbox, infos_ei, HORIZON, EPOCH)
+    data_pi = utils_bo.regret_bo(bbox, infos_pi, HORIZON, EPOCH)
 
     # Computing regrets
     pool = mp.ProcessingPool(JOBS)
