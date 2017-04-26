@@ -37,7 +37,8 @@ RHOMAX = 20
 DELTA = 0.05
 JOBS = 8
 
-SIDE = (.5, 2.5)
+#SIDE = (.5, 2.5)
+SIDE = (0., 2*np.pi)
 DIM = 1
 SIGMA = 0.01
 HORIZON = 50
@@ -54,8 +55,8 @@ alpha_ = math.log(HORIZON) * (SIGMA ** 2)
 rhos_hoo = [float(j)/float(RHOMAX-1) for j in range(RHOMAX)]
 nu_ = 1.
 
-target = target.Gramacy1()
-#target = target.Sine2()
+#target = target.Gramacy1()
+target = target.Sine2()
 #target = target.Himmelblau()
 bbox = utils_oo.std_box(target.f, target.fmax, NSPLITS, DIM, SIDE, SIGMA)
 
@@ -70,6 +71,18 @@ def f2(x):
     x = np.array([a, b])
     return target.f(x)[0]
 
+def get_info(lsp, f, bounds, policy, solver, recommender, niter, verbose, epoch):
+    infos = [None for k in range(epoch)]
+    for k in range(epoch):
+        xbest, model, info = solve_bayesopt(f, bounds, policy=policy, solver=solver, recommender=recommender, niter=niter, verbose=verbose)
+
+        mu, s2 = model.predict(lsp[:, None])
+        infos[k] = info
+
+        print(k+1)
+
+    return infos, mu, s2, xbest, model, info
+
 def main():
     #a, b = SIDE
     #bounds = np.array([[a, b]])
@@ -83,52 +96,23 @@ def main():
     if VERBOSE:
         print('GPUCB!')
 
-    infos_direct = [None for k in range(EPOCH)]
-    for k in range(EPOCH):
-        xbest, model, info = solve_bayesopt(f, bounds, policy='ucb', solver='direct', niter=HORIZON, verbose=False)
-
-        mu, s2 = model.predict(x[:, None])
-        infos_direct[k] = info
-
-        #regrets_current = np.array(utils_bo.regret_bo(bbox, info, HORIZON))
-        #regrets = np.add(regrets, regrets_current)
-
-        print(k+1)
+    infos_direct, mu_direct, s2_direct, xbest_direct, model_direct, info_direct = get_info(x, f, bounds, 'ucb', 'direct', 'incumbent', HORIZON, False, EPOCH)
 
     data_ucb_direct = utils_bo.regret_bo(bbox, infos_direct, HORIZON, EPOCH)
 
-    infos_lbfgs = [None for k in range(EPOCH)]
-    for k in range(EPOCH):
-        xbest, model, info = solve_bayesopt(f, bounds, policy='ucb', niter=HORIZON, verbose=False)
-
-        mu, s2 = model.predict(x[:, None])
-        infos_lbfgs[k] = info
-
-        print(k+1)
+    infos_lbfgs, mu_lbfgs, s2_lbfgs, xbest_lbfgs, model_lbfgs, info_lbfgs = get_info(x, f, bounds, 'ucb', 'lbfgs', 'incumbent', HORIZON, False, EPOCH)
 
     data_ucb_lbfgs = utils_bo.regret_bo(bbox, infos_lbfgs, HORIZON, EPOCH)
 
-    #infos_ei = [None for k in range(EPOCH)]
-    #for k in range(EPOCH):
-    #    xbest, model, info = solve_bayesopt(f, bounds, policy='ei', solver='direct', niter=HORIZON, verbose=False)
-
-    #    mu, s2 = model.predict(x[:, None])
-    #    infos_ei[k] = info
-
-    #    print(k+1)
+    #infos_ei, mu_ei, s2_ei, xbest_ei, model_ei, info_ei = get_info(x, f, bounds, 'ei', 'direct', 'incumbent', HORIZON, False, EPOCH)
 
     #data_ei = utils_bo.regret_bo(bbox, infos_ei, HORIZON, EPOCH)
 
-    infos_pi = [None for k in range(EPOCH)]
-    for k in range(EPOCH):
-        xbest, model, info = solve_bayesopt(f, bounds, policy='pi', solver='direct', niter=HORIZON, verbose=False)
+    #data_pi = utils_bo.regret_bo(bbox, infos_pi, HORIZON, EPOCH)
 
-        mu, s2 = model.predict(x[:, None])
-        infos_pi[k] = info
+    infos_thomp, mu_thomp, s2_thomp, xbest_thomp, model_thomp, info_thomp = get_info(x, f, bounds, 'thompson', 'direct', 'incumbent', HORIZON, False, EPOCH)
 
-        print(k+1)
-
-    data_pi = utils_bo.regret_bo(bbox, infos_pi, HORIZON, EPOCH)
+    data_thomp = utils_bo.regret_bo(bbox, infos_thomp, HORIZON, EPOCH)
 
     # Computing regrets
     pool = mp.ProcessingPool(JOBS)
@@ -184,21 +168,33 @@ def main():
             pickle.dump(data_ucb_direct, file)
         with open("data/GPUCB_LBFGS", 'wb') as file:
             pickle.dump(data_ucb_lbfgs, file)
-        with open("data/EI", 'wb') as file:
-            pickle.dump(data_ei, file)
+        #with open("data/EI", 'wb') as file:
+        #    pickle.dump(data_ei, file)
+        #with open("data/PI", 'wb') as file:
+        #    pickle.dump(data_pi, file)
+        with open("data/THOMP", 'wb') as file:
+            pickle.dump(data_thomp, file)
 
     if PLOT:
         utils_oo.show(PATH, EPOCH, HORIZON, rhos_hoo, rhos_poo, DELTA)
 
     if PLOT:
-        ax = figure().gca()
-        ax.plot_banded(x, mu, 2*np.sqrt(s2))
-        ax.axvline(xbest)
-        ax.scatter(info.x.ravel(), info.y)
-        ax.figure.canvas.draw()
+        fig = figure(figsize=(10, 5))
+        ax1 = fig.add_subplotspec((1, 2), (0, 0))
+        ax2 = fig.add_subplotspec((1, 2), (0, 1))
+
+        ax1.plot_banded(x, mu_direct, 2*np.sqrt(s2_direct))
+        ax1.axvline(xbest_direct)
+        ax1.scatter(info_direct.x.ravel(), info_direct.y)
+
+        ax2.plot_banded(x, mu_lbfgs, 2*np.sqrt(s2_lbfgs))
+        ax2.axvline(xbest_lbfgs)
+        ax2.scatter(info_lbfgs.x.ravel(), info_lbfgs.y)
+
+        fig.canvas.draw()
 
     show()
-    #bbox.plot1D()
+    bbox.plot1D()
 
 if __name__ == '__main__':
     main()

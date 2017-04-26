@@ -28,7 +28,7 @@ sys.setrecursionlimit(10000)
 #random.seed(42)
 
 # Macros
-HORIZON = 100
+HORIZON = 50
 RHOMAX = 20
 SIGMA = 0.1
 DELTA = 0.05
@@ -37,7 +37,7 @@ UPDATE = False
 VERBOSE = True
 PARALLEL = True
 JOBS = 8
-NSPLITS = 2
+NSPLITS = 3
 SAVE = True
 PATH = "data/"
 PLOT = False
@@ -64,7 +64,10 @@ bbox5 = utils_oo.std_box(f5.f, f5.fmax, NSPLITS, 1, (0., np.pi), SIGMA)
 
 f6 = target.Gramacy1()
 bbox6 = utils_oo.std_box(f6.f, f6.fmax, NSPLITS, 1, (0.5, 2.5), SIGMA)
-bbox6.plot1D()
+#bbox6.plot1D()
+
+f7 = target.Sine2()
+bbox7 = utils_oo.std_box(f7.f, f7.fmax, NSPLITS, 1, (0., 2*np.pi), SIGMA)
 
 # Simple regret evolutiion with respect to different rhos
 #regrets = np.zeros(RHOMAX)
@@ -97,7 +100,7 @@ bbox4 = utils_oo.std_box(f4.f, f4.fmax, NSPLITS, 2, (-3., 3.), SIGMA)
 #########################
 # Tests for HOO methods #
 #########################
-
+"""
 # Computing regrets
 pool = mp.ProcessingPool(JOBS)
 def partial_regret_hoo(rho):
@@ -152,7 +155,7 @@ if SAVE and VERBOSE:
         pickle.dump(data_poo, file)
 
 utils_oo.show(PATH, EPOCH, HORIZON, rhos_hoo, rhos_poo, DELTA)
-
+"""
 ########################
 # Tests for BO methods #
 ########################
@@ -160,3 +163,7 @@ utils_oo.show(PATH, EPOCH, HORIZON, rhos_hoo, rhos_poo, DELTA)
 #f, Xs, Ys, Xt, Yt, Kss = utils_bo.sample(side=(0, 40), plot=True, bbox=None)
 
 #utils_bo.bo(f, Xt, Yt, Xs, 100, bbox=False)
+
+a, b = (0., 2*np.pi)
+bounds = np.array([[a, b]])
+utils_bo.animated(f7, bounds, True, VERBOSE, HORIZON)
