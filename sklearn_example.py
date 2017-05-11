@@ -22,7 +22,7 @@ data, target = load_iris(True)
 def svccv(C, gamma):
     val = cross_val_score(
         SVC(C=C, gamma=gamma, random_state=2),
-        data, target, 'f1', cv=10
+        data, target, 'f1_macro', cv=10
     ).mean()
 
     return val
@@ -34,7 +34,7 @@ def rfccv(n_estimators, min_samples_split, max_features):
             max_features=min(max_features, 0.999),
             random_state=2
         ),
-        data, target, 'f1', cv=10
+        data, target, 'f1_macro', cv=10
     ).mean()
     return val
 
