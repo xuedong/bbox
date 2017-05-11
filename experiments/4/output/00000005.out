@@ -1,0 +1,9 @@
+Job launching after 0.08 seconds in submission.
+Running python job.
+Changed into dir /home/xuedong/Documents/xuedong/intern/bbox/experiments/4
+Importing experiment.py
+Running experiment.main()
+/usr/local/lib/python2.7/dist-packages/sklearn/svm/base.py:175: FutureWarning: elementwise comparison failed; returning scalar instead, but in the future will perform elementwise comparison
+  if self.gamma == 'auto':
+Got result -0.336956521739
+Completed successfully in 13.11 seconds. [{u'main': -0.33695652173913043}]
