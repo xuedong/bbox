@@ -41,7 +41,7 @@ JOBS = 8
 SIDE = (0., 2*np.pi)
 DIM = 1
 SIGMA = 0.01
-HORIZON = 50
+HORIZON = 5
 EPOCH = 10
 
 VERBOSE = True
@@ -179,17 +179,20 @@ def main():
         utils_oo.show(PATH, EPOCH, HORIZON, rhos_hoo, rhos_poo, DELTA)
 
     if PLOT:
-        fig = figure(figsize=(10, 5))
-        ax1 = fig.add_subplotspec((1, 2), (0, 0))
-        ax2 = fig.add_subplotspec((1, 2), (0, 1))
+        fig = figure()
+        ax = fig.gca()
+        #fig = figure(figsize=(5, 10))
+        #ax1 = fig.add_subplotspec((2, 1), (0, 0))
+        #ax2 = fig.add_subplotspec((2, 1), (1, 0))
 
-        ax1.plot_banded(x, mu_direct, 2*np.sqrt(s2_direct))
-        ax1.axvline(xbest_direct)
-        ax1.scatter(info_direct.x.ravel(), info_direct.y)
+        ax.plot_banded(x, mu_direct, 2*np.sqrt(s2_direct))
+        ax.axvline(xbest_direct)
+        ax.scatter(info_direct.x.ravel(), info_direct.y)
+        ax.set_title('model after 5 steps')
 
-        ax2.plot_banded(x, mu_lbfgs, 2*np.sqrt(s2_lbfgs))
-        ax2.axvline(xbest_lbfgs)
-        ax2.scatter(info_lbfgs.x.ravel(), info_lbfgs.y)
+        #ax2.plot_banded(x, index(x[:, None]))
+        #ax2.axvline(xbest_lbfgs)
+        #ax2.scatter(info_lbfgs.x.ravel(), info_lbfgs.y)
 
         fig.canvas.draw()
 
