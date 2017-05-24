@@ -16,6 +16,7 @@ import functools as ft
 
 import target
 import hoo
+import hct
 import poo
 import utils_oo
 
@@ -81,12 +82,23 @@ bbox7 = utils_oo.std_box(f7.f, f7.fmax, NSPLITS, 1, (0., 2*np.pi), SIGMA)
 # Simple regret evolution with respect to number of evaluations
 #regrets = np.zeros(HORIZON)
 #for k in range(EPOCH):
-#    regrets_current = np.array(regret_hoo(bbox2, 0.66, nu_))
+#    regrets_current, _, _ = utils_oo.regret_hoo(bbox2, 0.66, nu_, alpha_, SIGMA, HORIZON, UPDATE)
 #    regrets = np.add(regrets, regrets_current)
 #print("--- %s seconds ---" % (time.time() - start_time))
 #X = range(HORIZON)
 #pl.plot(X, regrets/float(EPOCH))
 #pl.show()
+
+regrets = np.zeros(HORIZON)
+c_ = 2 * math.sqrt(1/(1-0.66))
+c1_ = (0.66/(3*nu_)) ** (1./8)
+for k in range(EPOCH):
+    regrets_current, _, _ = utils_oo.regret_hct(bbox2, 0.66, nu_, c_, c1_, DELTA, SIGMA, HORIZON)
+    regrets = np.add(regrets, regrets_current)
+print("--- %s seconds ---" % (time.time() - start_time))
+X = range(HORIZON)
+pl.plot(X, regrets/float(EPOCH))
+pl.show()
 
 # 2D function test
 f3 = target.Himmelblau()
@@ -97,9 +109,9 @@ f4 = target.Rosenbrock(1, 100)
 bbox4 = utils_oo.std_box(f4.f, f4.fmax, NSPLITS, 2, (-3., 3.), SIGMA)
 #bbox4.plot2D()
 
-#########################
-# Tests for HOO methods #
-#########################
+########################
+# Tests for OO methods #
+########################
 """
 # Computing regrets
 pool = mp.ProcessingPool(JOBS)
@@ -159,7 +171,7 @@ utils_oo.show(PATH, EPOCH, HORIZON, rhos_hoo, rhos_poo, DELTA)
 ########################
 # Tests for BO methods #
 ########################
-
+"""
 #f, Xs, Ys, Xt, Yt, Kss = utils_bo.sample(side=(0, 40), plot=True, bbox=None)
 
 #utils_bo.bo(f, Xt, Yt, Xs, 100, bbox=False)
@@ -167,3 +179,4 @@ utils_oo.show(PATH, EPOCH, HORIZON, rhos_hoo, rhos_poo, DELTA)
 a, b = (0., 2*np.pi)
 bounds = np.array([[a, b]])
 utils_bo.animated(f7, bounds, True, VERBOSE, HORIZON)
+"""

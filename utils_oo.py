@@ -12,6 +12,7 @@ import pickle
 
 import target
 import hoo
+import hct
 import poo
 
 def std_box(f, fmax, nsplits, dim, side, sigma):
@@ -40,6 +41,28 @@ def regret_hoo(bbox, rho, nu, alpha, sigma, horizon, update):
         x_sel[i] = x
         z = random.choice(x_sel[0:(i+1)])
         y_sim[i] = bbox.fmax - bbox.f_mean(z)
+
+    return y_cum, y_sim, x_sel
+
+def regret_hct(bbox, rho, nu, c, c1, delta, sigma, horizon):
+    y_cum = [0. for i in range(horizon)]
+    y_sim = [0. for i in range(horizon)]
+    x_sel = [None for i in range(horizon)]
+    hctree = hct.HCTree(bbox.support, None, 0, rho, nu, 1, 1, bbox)
+    cum = 0.
+
+    for i in range(1, horizon+1):
+        tplus = int(2**(math.ceil(math.log(i))))
+        dvalue = min(c1*delta/tplus, 0.5)
+
+        if i == tplus:
+            hctree.update(c, dvalue)
+        x, _, _ = hctree.sample(c, dvalue)
+        cum += bbox.fmax - bbox.f_mean(x)
+        y_cum[i-1] = cum/i
+        x_sel[i-1] = x
+        z = random.choice(x_sel[0:i])
+        y_sim[i-1] = bbox.fmax - bbox.f_mean(z)
 
     return y_cum, y_sim, x_sel
 
