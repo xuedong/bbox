@@ -80,6 +80,16 @@ class DiffFunc:
     def fmax(self):
         return self.fmax
 
+class Garland:
+    def __init__(self):
+        self.fmax = 0.997772313413222
+
+    def f(self, x):
+        return 4*x[0]*(1-x[0])*(0.75+0.25*(1-np.sqrt(np.abs(np.sin(60*x[0])))))
+
+    def fmax(self):
+        return self.fmax
+
 class Himmelblau:
     def __init__(self):
         self.fmax = 0.

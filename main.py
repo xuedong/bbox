@@ -37,15 +37,15 @@ RHOMAX = 20
 DELTA = 0.05
 JOBS = 8
 
-#SIDE = (.5, 2.5)
-SIDE = (0., 2*np.pi)
+SIDE = (0., 1.)
+#SIDE = (0., 2*np.pi)
 DIM = 1
 SIGMA = 0.01
-HORIZON = 5
-EPOCH = 10
+HORIZON = 100
+EPOCH = 5
 
 VERBOSE = True
-PLOT = True
+PLOT = False
 SAVE = True
 PARALLEL = True
 PATH = "data/"
@@ -56,7 +56,7 @@ rhos_hoo = [float(j)/float(RHOMAX-1) for j in range(RHOMAX)]
 nu_ = 1.
 
 #target = target.Gramacy1()
-target = target.Sine2()
+target = target.DiffFunc(0.5)
 #target = target.Himmelblau()
 bbox = utils_oo.std_box(target.f, target.fmax, NSPLITS, DIM, SIDE, SIGMA)
 
@@ -64,7 +64,7 @@ bbox = utils_oo.std_box(target.f, target.fmax, NSPLITS, DIM, SIDE, SIGMA)
 
 def f(x):
     x = np.array([x])
-    return target.f(x)[0]
+    return target.f(x)
 
 def f2(x):
     a, b = x
@@ -107,6 +107,8 @@ def main():
     #infos_ei, mu_ei, s2_ei, xbest_ei, model_ei, info_ei = get_info(x, f, bounds, 'ei', 'direct', 'incumbent', HORIZON, False, EPOCH)
 
     #data_ei = utils_bo.regret_bo(bbox, infos_ei, HORIZON, EPOCH)
+
+    #infos_pi, mu_pi, s2_pi, xbest_pi, model_pi, info_pi = get_info(x, f, bounds, 'pi', 'direct', 'incumbent', HORIZON, False, EPOCH)
 
     #data_pi = utils_bo.regret_bo(bbox, infos_pi, HORIZON, EPOCH)
 
@@ -175,8 +177,9 @@ def main():
         with open("data/THOMP", 'wb') as file:
             pickle.dump(data_thomp, file)
 
-    if PLOT:
-        utils_oo.show(PATH, EPOCH, HORIZON, rhos_hoo, rhos_poo, DELTA)
+    #rhos_poo = utils_oo.get_rhos(NSPLITS, 0.9, HORIZON)
+
+    utils_oo.show(PATH, EPOCH, HORIZON, rhos_hoo, rhos_poo, DELTA)
 
     if PLOT:
         fig = figure()
@@ -197,7 +200,7 @@ def main():
         fig.canvas.draw()
 
     show()
-    bbox.plot1D()
+    #bbox.plot1D()
 
 if __name__ == '__main__':
     main()

@@ -8,6 +8,7 @@ import numpy as np
 import math
 
 import hoo
+import hct
 
 class PTree:
     def __init__(self, support, father, depth, rhos, nu, box):

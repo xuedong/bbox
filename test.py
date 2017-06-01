@@ -29,11 +29,11 @@ sys.setrecursionlimit(10000)
 #random.seed(42)
 
 # Macros
-HORIZON = 5000
+HORIZON = 50
 RHOMAX = 20
 SIGMA = 0.1
 DELTA = 0.05
-EPOCH = 50
+EPOCH = 10
 UPDATE = False
 VERBOSE = True
 PARALLEL = True
@@ -57,7 +57,7 @@ bbox1 = utils_oo.std_box(f1.f, f1.fmax, NSPLITS, 1, (0., 1.), SIGMA)
 
 f2 = target.DiffFunc(0.5)
 bbox2 = utils_oo.std_box(f2.f, f2.fmax, NSPLITS, 1, (0., 1.), SIGMA)
-#bbox2.plot1D()
+bbox2.plot1D()
 
 f5 = target.Sine1()
 bbox5 = utils_oo.std_box(f5.f, f5.fmax, NSPLITS, 1, (0., np.pi), SIGMA)
@@ -69,36 +69,11 @@ bbox6 = utils_oo.std_box(f6.f, f6.fmax, NSPLITS, 1, (0.5, 2.5), SIGMA)
 
 f7 = target.Sine2()
 bbox7 = utils_oo.std_box(f7.f, f7.fmax, NSPLITS, 1, (0., 2*np.pi), SIGMA)
+#bbox7.plot1D()
 
-# Simple regret evolutiion with respect to different rhos
-#regrets = np.zeros(RHOMAX)
-#for k in range(EPOCH):
-#    regrets_current = np.array([regret_hoo(bbox2, rho_[i], nu_)[HORIZON-1] for i in range(RHOMAX)])
-#    regrets = np.add(regrets, regrets_current)
-#print("--- %s seconds ---" % (time.time() - start_time))
-#pl.plot(rho_, regrets/float(EPOCH))
-#pl.show()
-
-# Simple regret evolution with respect to number of evaluations
-regrets1 = np.zeros(HORIZON)
-for k in range(EPOCH):
-    regrets_current, _, _ = utils_oo.regret_hoo(bbox6, 0.66, nu_, alpha_, SIGMA, HORIZON, UPDATE)
-    regrets1 = np.add(regrets1, regrets_current)
-#print("--- %s seconds ---" % (time.time() - start_time))
-X = range(HORIZON)
-pl.plot(X, regrets1/float(EPOCH), label=r"$\mathtt{HOO}$", color='red')
-#pl.show()
-
-regrets2 = np.zeros(HORIZON)
-c_ = 2 * math.sqrt(1/(1-0.66))
-c1_ = (0.66/(3*nu_)) ** (1./8)
-for k in range(EPOCH):
-    regrets_current, _, _ = utils_oo.regret_hct(bbox6, 0.66, nu_, c_, c1_, DELTA, SIGMA, HORIZON)
-    regrets2 = np.add(regrets2, regrets_current)
-print("--- %s seconds ---" % (time.time() - start_time))
-#X = range(HORIZON)
-pl.plot(X, regrets2/float(EPOCH), label=r"$\mathtt{HCT}$", color='blue')
-pl.show()
+f8 = target.Garland()
+bbox8 = utils_oo.std_box(f8.f, f8.fmax, NSPLITS, 1, (0., 1.), SIGMA)
+#bbox8.plot1D()
 
 # 2D function test
 f3 = target.Himmelblau()
@@ -109,10 +84,45 @@ f4 = target.Rosenbrock(1, 100)
 bbox4 = utils_oo.std_box(f4.f, f4.fmax, NSPLITS, 2, (-3., 3.), SIGMA)
 #bbox4.plot2D()
 
+c_ = 2 * math.sqrt(1/(1-0.66))
+c1_ = (0.66/(3*nu_)) ** (1./8)
+
+# Simple regret evolutiion with respect to different rhos
+#regrets = np.zeros(RHOMAX)
+#for k in range(EPOCH):
+#    regrets_current = np.array([utils_oo.regret_hct(bbox7, rhos_hoo[i], nu_, c_, c1_, DELTA, SIGMA, HORIZON)[0][HORIZON-1] for i in range(RHOMAX)])
+#    regrets = np.add(regrets, regrets_current)
+#print("--- %s seconds ---" % (time.time() - start_time))
+#pl.plot(rho_, regrets/float(EPOCH))
+#pl.show()
+"""
+# Simple regret evolution with respect to number of evaluations
+regrets1 = np.zeros(HORIZON)
+for k in range(EPOCH):
+    regrets_current, _, _ = utils_oo.regret_hoo(bbox1, 0.66, nu_, alpha_, SIGMA, HORIZON, UPDATE)
+    regrets1 = np.add(regrets1, regrets_current)
+#print("--- %s seconds ---" % (time.time() - start_time))
+X = range(HORIZON)
+pl.plot(X, regrets1/float(EPOCH), label=r"$\mathtt{HOO}$", color='red')
+#pl.show()
+
+regrets2 = np.zeros(HORIZON)
+for k in range(EPOCH):
+    regrets_current, _, _ = utils_oo.regret_hct(bbox1, 0.66, nu_, c_, c1_, DELTA, SIGMA, HORIZON)
+    regrets2 = np.add(regrets2, regrets_current)
+print("--- %s seconds ---" % (time.time() - start_time))
+#X = range(HORIZON)
+pl.plot(X, regrets2/float(EPOCH), label=r"$\mathtt{HCT}$", color='blue')
+
+pl.legend()
+pl.xlabel("number of evaluations")
+pl.ylabel(r"$R_n/n$")
+pl.show()
+"""
 ########################
 # Tests for OO methods #
 ########################
-"""
+
 # Computing regrets
 pool = mp.ProcessingPool(JOBS)
 def partial_regret_hoo(rho):
@@ -167,7 +177,7 @@ if SAVE and VERBOSE:
         pickle.dump(data_poo, file)
 
 utils_oo.show(PATH, EPOCH, HORIZON, rhos_hoo, rhos_poo, DELTA)
-"""
+
 ########################
 # Tests for BO methods #
 ########################
