@@ -12,6 +12,12 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+from sklearn.metrics import log_loss, mean_squared_error
+from sklearn.model_selection import train_test_split, KFold
+from sklearn.preprocessing import StandardScaler
+
+import utils
+
 """
 Target functions
 """
@@ -123,22 +129,75 @@ class Gramacy1:
     def fmax(self):
         return self.fmax
 
+class LossSVM:
+    def __init__(self, model, X, y, method, problem):
+        self.loss = utils.loss(model, X, y, method, problem)
+
+    def f(self, x):
+        return self.loss.evaluateLoss(C=x[0], gamma=x[1])
+
+class LossGBM:
+    def __init__(self, model, X, y, method, problem):
+        self.loss = utils.loss(model, X, y, method, problem)
+
+    def f(self, x):
+        return self.loss.evaluateLoss(learning_rate=x[0], n_estimators=x[1], max_depth=x[2], min_samples_split=x[3])
+
+class LossKNN:
+    def __init__(self, model, X, y, method, problem):
+        self.loss = utils.loss(model, X, y, method, problem)
+
+    def f(self, x):
+        return self.loss.evaluateLoss(n_neighbors=x[0])
+
+class LossMLP:
+    def __init__(self, model, X, y, method, problem):
+        self.loss = utils.loss(model, X, y, method, problem)
+
+    def f(self, x):
+        return self.loss.evaluateLoss(hidden_layer_size=x[0], alpha=x[1])
+
 """
 Function domain partitioning
 """
-def std_center(support):
+def std_center(support, support_type):
     """
     Pick the center of a subregion.
     """
-    return [(support[i][0]+support[i][1])/2. for i in range(len(support))]
+    centers = []
+    for i in range(len(support)):
+        if support_type[i] == 'int':
+            a, b = support[i]
+            center = (a+b)/2
+            centers.append(center)
+        elif support_type[i] == 'cont':
+            a, b = support[i]
+            center = (a+b)/2.
+        else:
+            raise ValueError('Unsupported variable type.')
 
-def std_rand(support):
+    return centers
+
+def std_rand(support, support_type):
     """
     Randomly pick a point in a subregion.
     """
-    return [(support[i][0]+(support[i][1]-support[i][0])*random.random()) for i in range(len(support))]
+    rands = []
+    for i in range(len(support)):
+        if support_type[i] == 'int':
+            a, b = support[i]
+            rand = np.random.randint(a, b+1)
+            rands.append(rand)
+        elif support_type[i] == 'cont':
+            a, b = support[i]
+            rand = a + (b-a)*random.random()
+            rands.append(rand)
+        else:
+            raise ValueError('Unsupported variable type.')
 
-def std_split(support, nsplits):
+    return rands
+
+def std_split(support, support_type, nsplits):
     """
     Split a box uniformly.
     """
@@ -147,17 +206,24 @@ def std_split(support, nsplits):
     max_length = np.max(lens)
     a, b = support[max_index]
     step = max_length/float(nsplits)
-    split = [(a+step*i, a+step*(i+1)) for i in range(nsplits)]
+    if support_type[max_index] == 'int':
+        split = [(a+int(step*i), a+int(step*(i+1))) for i in range(nsplits)]
+    elif support_type[max_index] == 'cont':
+        split = [(a+step*i, a+step*(i+1)) for i in range(nsplits)]
+    else:
+        raise ValueError("Unsupported variable type.")
 
     supports = [None for i in range(nsplits)]
+    supports_type = [None for i in range(nsplits)]
     for i in range(nsplits):
         supports[i] = [support[j] for j in range(len(support))]
         supports[i][max_index] = split[i]
+        supports_type[i] = support_type
 
-    return supports
+    return supports, supports_type
 
 class Box:
-    def __init__(self, f, fmax, nsplits, dim, side):
+    def __init__(self, f, fmax, nsplits, support, support_type):
         self.f_noised = None
         self.f_mean = f
         self.fmax = fmax
@@ -165,8 +231,8 @@ class Box:
         self.center = None
         self.rand = None
         self.nsplits = nsplits
-        self.dim = dim
-        self.side = side
+        self.support = support
+        self.support_type = support_type
 
     def std_partition(self):
         """
@@ -175,9 +241,6 @@ class Box:
         self.center = std_center
         self.rand = std_rand
         self.split = std_split
-        self.support = []
-        for i in range(self.dim):
-            self.support.append(self.side)
 
     def std_noise(self, sigma):
         """
@@ -185,11 +248,8 @@ class Box:
         """
         self.f_noised = lambda x: self.f_mean(x) + sigma*np.random.normal(0, sigma)
         #self.f_noised = lambda x: self.f_mean(x) + sigma*random.random()
-
+    """
     def plot1D(self):
-        """
-        Plot for 1D function.
-        """
         a, b = self.side
         fig, ax = plt.subplots()
         ax.set_xlim(a, b)
@@ -199,9 +259,6 @@ class Box:
         plt.show()
 
     def plot2D(self):
-        """
-        Plot for 2D function
-        """
         # 2D spaced down level curve plot
         x = np.array([(i-600)/100. for i in range(1199)])
         y = np.array([(j-600)/100. for j in range(1199)])
@@ -221,3 +278,4 @@ class Box:
         ax.zaxis.set_major_formatter(mpl.ticker.FormatStrFormatter('%.02f'))
         fig.colorbar(surf, shrink=0.5, aspect=5)
         mpl.pyplot.show()
+    """

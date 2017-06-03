@@ -11,18 +11,19 @@ import math
 import random
 import pickle
 import time
-import pathos.multiprocessing as mp
+#import pathos.multiprocessing as mp
 import functools as ft
 
 import target
-import hoo
-import hct
-import poo
-import utils_oo
+import ho.hoo as hoo
+import ho.poo as poo
+import ho.utils_oo as utils_oo
+import utils
+from modaux import *
 
-import basis
-import gp
-import utils_bo
+from sklearn.metrics import log_loss, mean_squared_error
+from sklearn.model_selection import train_test_split, KFold
+from sklearn.preprocessing import StandardScaler
 
 # System settings
 sys.setrecursionlimit(10000)
@@ -36,7 +37,7 @@ DELTA = 0.05
 EPOCH = 10
 UPDATE = False
 VERBOSE = True
-PARALLEL = True
+PARALLEL = False
 JOBS = 8
 NSPLITS = 3
 SAVE = True
@@ -50,14 +51,16 @@ nu_ = 1.
 
 start_time = time.time()
 
+
 # First test
 f1 = target.DoubleSine(0.3, 0.8, 0.5)
-bbox1 = utils_oo.std_box(f1.f, f1.fmax, NSPLITS, 1, (0., 1.), SIGMA)
+bbox1 = utils_oo.std_box(f1.f, f1.fmax, NSPLITS, SIGMA, [(0., 1.)], ['cont'])
 #bbox1.plot1D()
+
 
 f2 = target.DiffFunc(0.5)
 bbox2 = utils_oo.std_box(f2.f, f2.fmax, NSPLITS, 1, (0., 1.), SIGMA)
-bbox2.plot1D()
+#bbox2.plot1D()
 
 f5 = target.Sine1()
 bbox5 = utils_oo.std_box(f5.f, f5.fmax, NSPLITS, 1, (0., np.pi), SIGMA)
@@ -77,7 +80,7 @@ bbox8 = utils_oo.std_box(f8.f, f8.fmax, NSPLITS, 1, (0., 1.), SIGMA)
 
 # 2D function test
 f3 = target.Himmelblau()
-bbox3 = utils_oo.std_box(f3.f, f3.fmax, NSPLITS, 2, (-6., 6.), SIGMA)
+bbox3 = utils_oo.std_box(f3.f, f3.fmax, NSPLITS, SIGMA, [(-6., 6.), (-6, 6)], ['cont', 'int'])
 #bbox3.plot2D()
 
 f4 = target.Rosenbrock(1, 100)
@@ -124,9 +127,9 @@ pl.show()
 ########################
 
 # Computing regrets
-pool = mp.ProcessingPool(JOBS)
+#pool = mp.ProcessingPool(JOBS)
 def partial_regret_hoo(rho):
-    cum, sim, sel = utils_oo.regret_hoo(bbox6, rho, nu_, alpha_, SIGMA, HORIZON, UPDATE)
+    cum, sim, sel = utils_oo.regret_hoo(bbox3, rho, nu_, alpha_, SIGMA, HORIZON, UPDATE)
     return cum
 #partial_regret_hoo = ft.partial(utils_oo.regret_cumulative_hoo, bbox=bbox1, nu=nu_, alpha=alpha_, SIGMA, HORIZON, UPDATE)
 
@@ -147,7 +150,7 @@ if PARALLEL:
 else:
     for k in range(EPOCH):
         for j in range(len(rhos_hoo)):
-            cums, sims, sels = utils.regret_hoo(bbox6, float(j)/float(len(rhos_hoo)), nu_, alpha_, SIGMA, HORIZON, UPDATE)
+            cums, sims, sels = utils_oo.regret_hoo(bbox3, float(j)/float(len(rhos_hoo)), nu_, alpha_, SIGMA, HORIZON, UPDATE)
             for i in range(HORIZON):
                 current[j][i] += cums[i]
             if VERBOSE:
@@ -161,7 +164,7 @@ else:
 if VERBOSE:
     print("POO!")
 
-pcum, psim, psel = utils_oo.regret_poo(bbox6, rhos_poo, nu_, alpha_, HORIZON, EPOCH)
+pcum, psim, psel = utils_oo.regret_poo(bbox3, rhos_poo, nu_, alpha_, HORIZON, EPOCH)
 data_poo = pcum
 
 #print(dataPOO)

@@ -1,0 +1,13 @@
+========================
+ Black Box Optimization
+========================
+
+This project contains two parts of code:
+1. bo stands for Bayesian optimization
+2. ho stands for hierarchical optimization
+
+Dependencies
+============
+
+Python 3.x
+scikit-learn 0.18.1
