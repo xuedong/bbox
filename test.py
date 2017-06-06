@@ -19,7 +19,7 @@ import ho.hoo as hoo
 import ho.poo as poo
 import ho.utils_oo as utils_oo
 import utils
-from modaux import *
+from clfs import *
 
 from sklearn.metrics import log_loss, mean_squared_error
 from sklearn.model_selection import train_test_split, KFold
