@@ -26,7 +26,7 @@ NSPLITS = 3
 SAVE = True
 PATH = "data/"
 PLOT = False
-MODEL = 'KNN'
+MODEL = 'SVM'
 
 alpha_ = math.log(HORIZON) * (SIGMA ** 2)
 #rhos_hoo = [float(j)/float(RHOMAX-1) for j in range(RHOMAX)]
@@ -54,11 +54,11 @@ if __name__ == '__main__':
     path = os.path.join(os.getcwd(), 'datasets')
     #datasets = ['aff.csv', 'pinter.csv', 'breast_cancer.csv', 'indian_liver.csv', 'parkinsons.csv',
     #            'lsvt.csv', 'pima-indians-diabetes.csv']
-    datasets = ['hydro.csv']
+    datasets = ['wine.csv']
     #problems = ['cont', 'binary', 'binary', 'binary', 'binary', 'binary', 'binary']
     problems = ['cont']
     #targets = [0, 0, 0, 10, 16, 0, 8]
-    targets = [6]
+    targets = [0]
 
     for model, parameter_dict in zip(models, params):
         print('Evaluating model {}'.format(model.name))
