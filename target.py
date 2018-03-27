@@ -12,12 +12,6 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-from sklearn.metrics import log_loss, mean_squared_error
-from sklearn.model_selection import train_test_split, KFold
-from sklearn.preprocessing import StandardScaler
-
-import utils
-
 """
 Target functions
 """
@@ -129,33 +123,6 @@ class Gramacy1:
     def fmax(self):
         return self.fmax
 
-class LossSVM:
-    def __init__(self, model, X, y, method, problem):
-        self.loss = utils.loss(model, X, y, method, problem)
-
-    def f(self, x):
-        return self.loss.evaluateLoss(C=x[0], gamma=x[1])
-
-class LossGBM:
-    def __init__(self, model, X, y, method, problem):
-        self.loss = utils.loss(model, X, y, method, problem)
-
-    def f(self, x):
-        return self.loss.evaluateLoss(learning_rate=x[0], n_estimators=x[1], max_depth=x[2], min_samples_split=x[3])
-
-class LossKNN:
-    def __init__(self, model, X, y, method, problem):
-        self.loss = utils.loss(model, X, y, method, problem)
-
-    def f(self, x):
-        return self.loss.evaluateLoss(n_neighbors=x[0])
-
-class LossMLP:
-    def __init__(self, model, X, y, method, problem):
-        self.loss = utils.loss(model, X, y, method, problem)
-
-    def f(self, x):
-        return self.loss.evaluateLoss(hidden_layer_size=x[0], alpha=x[1])
 
 """
 Function domain partitioning
