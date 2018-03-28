@@ -173,5 +173,5 @@ if SAVE and VERBOSE:
     with open("data/POO", 'wb') as file:
         pickle.dump(data_poo, file)
 
-#utils_ho.show(PATH, EPOCH, HORIZON, rhos_hoo, rhos_poo, DELTA)
+utils_ho.show(PATH, EPOCH, HORIZON, rhos_hoo, rhos_poo, DELTA)
 
